@@ -1657,7 +1657,7 @@ function calcSolver() {
   const Gkp    = k * p;
   const Tp     = fsize / (bw * 1000);           // seconds
   const effKbps = S * bw;
-
+  const diff = Math.abs(pSuccB - S);
   // ── Build step-by-step HTML ──
   const label  = isPure ? 'Pure' : 'Slotted';
   const formula= isPure ? 'G · e^(−2G)' : 'G · e^(−G)';
@@ -1715,50 +1715,70 @@ function calcSolver() {
   const out = document.getElementById('sol-out');
   out.style.display = 'block';
   out.innerHTML = `
-    <span class="sol-out-title">Step-by-step solution — ${label} ALOHA &nbsp;|&nbsp; G = ${G}, k = ${k}, p = ${p}</span>
-    ${steps.map(s => `
-      <div class="sr" style="flex-direction:column;align-items:flex-start;gap:4px;padding:10px 0">
-        <div style="display:flex;gap:10px;align-items:center">
-          <span style="
-            flex-shrink:0;width:22px;height:22px;border-radius:50%;
-            background:var(--bg4);border:1px solid var(--border2);
-            font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--blue);
-            display:flex;align-items:center;justify-content:center">${s.n}</span>
-          <span class="sk" style="color:var(--text)">${s.desc}</span>
-        </div>
-        <div style="
-          margin-left:32px;font-family:var(--font-mono);font-size:12px;
-          color:var(--cyan);line-height:1.8;background:var(--bg4);
-          padding:8px 12px;border-radius:5px;border-left:2px solid var(--blue);
-          width:100%">${s.math}</div>
+  <span class="sol-out-title">
+    Step-by-step solution — ${label} ALOHA | G = ${G}, k = ${k}, p = ${p}
+  </span>
+
+  ${steps.map(s => `
+    <div class="sr" style="flex-direction:column;align-items:flex-start;gap:4px;padding:10px 0">
+      <div style="display:flex;gap:10px;align-items:center">
+        <span style="
+          width:22px;height:22px;border-radius:50%;
+          background:var(--bg4);border:1px solid var(--border2);
+          font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--blue);
+          display:flex;align-items:center;justify-content:center">${s.n}</span>
+        <span class="sk" style="color:var(--text)">${s.desc}</span>
       </div>
-    `).join('')}
-    <div style="margin-top:12px;padding:12px 16px;background:rgba(52,211,153,0.07);
-      border:1px solid rgba(52,211,153,0.25);border-radius:6px;
-      font-size:13px;color:var(--text);line-height:1.8">
-      <strong style="color:var(--green)">✓ Summary</strong><br>
-      S = <strong>${(S*100).toFixed(3)}%</strong> &nbsp;|&nbsp;
-      P(empty) = <strong>${(Pempty*100).toFixed(3)}%</strong> &nbsp;|&nbsp;
-      P(coll) = <strong>${(Pcoll*100).toFixed(3)}%</strong> &nbsp;|&nbsp;
-      Eff = <strong>${effKbps.toFixed(3)} kbps</strong>
+      <div style="
+        margin-left:32px;font-family:var(--font-mono);font-size:12px;
+        color:var(--cyan);line-height:1.8;background:var(--bg4);
+        padding:8px 12px;border-radius:5px;border-left:2px solid var(--blue);
+        width:100%">${s.math}</div>
     </div>
-    // 🔽 ADD THIS at the end of out.innerHTML template
-<div style="
-  margin-top:10px;
-  padding:10px 14px;
-  background:rgba(255,255,255,0.03);
-  border:1px solid var(--border2);
-  border-left:3px solid var(--amber);
-  border-radius:6px;
-  font-size:12px;
-  color:var(--text2);
-  line-height:1.6">
-  <strong style="color:var(--amber)">Note:</strong>
-  Throughput <code>S = G·e^(−G)</code> uses the <em>Poisson (infinite users)</em> model,
-  while <code>P<sub>s</sub> = k·p·(1−p)^(k−1)</code> uses a <em>finite-station (binomial)</em> model.
-  Values may differ slightly when <code>k</code> is small.
-</div>
-  `;
+  `).join('')}
+
+  <!--  NEW: Comparison Block -->
+  <div style="
+    margin-top:12px;
+    padding:12px;
+    background:var(--bg4);
+    border:1px solid var(--border2);
+    border-radius:6px;
+    font-family:var(--font-mono);
+    font-size:12px;">
+    
+    <div><strong>Poisson Throughput (S)</strong> = ${S.toFixed(5)}</div>
+    <div><strong>Binomial Success (Pₛ)</strong> = ${pSuccB.toFixed(5)}</div>
+    <div><strong>Difference</strong> ≈ ${diff.toFixed(5)}</div>
+  </div>
+
+  <!--  NEW: Explanation -->
+  <div style="
+    margin-top:10px;
+    padding:10px;
+    background:rgba(255,255,255,0.03);
+    border-left:3px solid var(--amber);
+    border-radius:6px;
+    font-size:12px;
+    color:var(--text2);">
+    
+    <strong style="color:var(--amber)">Note:</strong>
+    S = G·e^(−G) uses Poisson (infinite users), while 
+    k·p·(1−p)^(k−1) uses finite stations.
+    So values may differ slightly.
+  </div>
+
+  <!-- Summary -->
+  <div style="margin-top:12px;padding:12px 16px;background:rgba(52,211,153,0.07);
+    border:1px solid rgba(52,211,153,0.25);border-radius:6px;">
+    
+    <strong style="color:var(--green)">✓ Summary</strong><br>
+    S = <strong>${(S*100).toFixed(3)}%</strong> &nbsp;|&nbsp;
+    P(empty) = <strong>${(Pempty*100).toFixed(3)}%</strong> &nbsp;|&nbsp;
+    P(coll) = <strong>${(Pcoll*100).toFixed(3)}%</strong> &nbsp;|&nbsp;
+    Eff = <strong>${effKbps.toFixed(3)} kbps</strong>
+  </div>
+`;
 }
 
 /* ─── SCROLL FADE ─── */
