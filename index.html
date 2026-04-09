@@ -1,0 +1,1704 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALOHAnet — Interactive Protocol Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════════
+   DESIGN TOKENS — DARK / LIGHT
+══════════════════════════════════════════════════ */
+:root {
+  --bg:       #08090b;
+  --bg2:      #0f1014;
+  --bg3:      #16171d;
+  --bg4:      #1c1d26;
+  --border:   rgba(255,255,255,0.06);
+  --border2:  rgba(255,255,255,0.12);
+  --amber:    #f0b429;
+  --blue:     #3b9eff;
+  --green:    #34d399;
+  --red:      #f87171;
+  --cyan:     #67e8f9;
+  --purple:   #a78bfa;
+  --text:     #e2e4ec;
+  --text2:    #9ba3b8;
+  --dim:      #5a6278;
+  --font-body: 'DM Sans', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+  --font-disp: 'Playfair Display', serif;
+  --nav-h: 64px;
+  --radius: 10px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+[data-theme="light"] {
+  --bg:     #f5f6fa;
+  --bg2:    #ffffff;
+  --bg3:    #eef0f6;
+  --bg4:    #e4e7f0;
+  --border: rgba(0,0,0,0.08);
+  --border2: rgba(0,0,0,0.15);
+  --text:   #1a1c28;
+  --text2:  #4a5068;
+  --dim:    #8892a8;
+  --shadow: 0 4px 24px rgba(0,0,0,0.1);
+}
+
+/* ══════════════════════════════════════════════════
+   RESET & BASE
+══════════════════════════════════════════════════ */
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.65;
+  min-height: 100vh;
+}
+[data-theme="dark"] body {
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(59,158,255,0.08) 0%, transparent 70%),
+    linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px);
+  background-size: 100% 100%, 48px 48px, 48px 48px;
+}
+code { font-family: var(--font-mono); font-size: 0.85em; color: var(--cyan); background: var(--bg3); padding: 1px 5px; border-radius: 3px; }
+a { color: var(--blue); text-decoration: none; }
+
+/* ══════════════════════════════════════════════════
+   NAVBAR
+══════════════════════════════════════════════════ */
+nav {
+  position: sticky; top: 0; z-index: 200;
+  height: var(--nav-h);
+  background: rgba(8,9,11,0.88);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 28px; gap: 0;
+}
+[data-theme="light"] nav { background: rgba(245,246,250,0.92); }
+.nav-brand {
+  display: flex; align-items: center; gap: 11px; text-decoration: none;
+  flex-shrink: 0; margin-right: 32px;
+}
+.nav-brand-icon {
+  width: 34px; height: 34px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--blue), var(--cyan));
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-weight: 700; font-size: 13px;
+  color: #08090b; letter-spacing: -1px; flex-shrink: 0;
+}
+.nav-brand-text { display: flex; flex-direction: column; line-height: 1.2; }
+.nav-brand-title { font-family: var(--font-mono); font-weight: 700; font-size: 14px; color: var(--text); letter-spacing: -0.5px; }
+.nav-brand-sub { font-size: 10px; color: var(--dim); letter-spacing: 0.5px; }
+.nav-links { display: flex; align-items: stretch; gap: 2px; flex: 1; }
+.nav-link {
+  padding: 0 14px; height: var(--nav-h); border: none; background: none;
+  font-family: var(--font-body); font-size: 13px; font-weight: 500;
+  color: var(--text2); cursor: pointer; white-space: nowrap;
+  border-bottom: 2px solid transparent; transition: all 0.15s;
+  display: flex; align-items: center; gap: 6px;
+}
+.nav-link:hover { color: var(--text); }
+.nav-link.on { color: var(--blue); border-bottom-color: var(--blue); }
+.nav-actions { display: flex; gap: 8px; margin-left: auto; flex-shrink: 0; }
+.icon-btn {
+  padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border2);
+  background: var(--bg3); color: var(--text2); font-family: var(--font-mono);
+  font-size: 11px; cursor: pointer; transition: all 0.15s;
+}
+.icon-btn:hover { color: var(--text); border-color: var(--blue); }
+.dl-btn {
+  padding: 7px 16px; border-radius: 6px; border: 1px solid rgba(52,211,153,0.4);
+  background: rgba(52,211,153,0.1); color: var(--green);
+  font-family: var(--font-mono); font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.15s;
+}
+.dl-btn:hover { background: rgba(52,211,153,0.2); }
+
+/* ══════════════════════════════════════════════════
+   HERO
+══════════════════════════════════════════════════ */
+#hero {
+  padding: 100px 36px 80px;
+  max-width: 1100px; margin: 0 auto;
+  position: relative;
+}
+.hero-label {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--dim);
+  border: 1px solid var(--border2); border-radius: 20px;
+  padding: 5px 14px; margin-bottom: 28px;
+}
+.hero-label::before { content: ''; width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+.hero-h {
+  font-family: var(--font-disp); font-size: clamp(3rem,7vw,5.5rem);
+  font-weight: 800; line-height: 1.05; letter-spacing: -2px;
+  margin-bottom: 28px;
+}
+.hero-h .line1 { display: block; color: var(--text); }
+.hero-h .hollow {
+  display: block;
+  -webkit-text-stroke: 2px var(--blue);
+  color: transparent;
+}
+.hero-sub {
+  display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: start;
+  margin-bottom: 52px; max-width: 800px;
+}
+.hero-p { font-size: 15px; color: var(--text2); line-height: 1.75; max-width: 520px; }
+.hero-quick { display: flex; flex-direction: column; gap: 10px; }
+.hero-quick-item {
+  font-family: var(--font-mono); font-size: 11px; color: var(--dim);
+  white-space: nowrap;
+}
+.hero-quick-item span { color: var(--amber); margin-right: 6px; }
+.hero-grid {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  border: 1px solid var(--border2); border-radius: var(--radius); overflow: hidden;
+}
+.hero-stat {
+  padding: 24px 28px;
+  border-right: 1px solid var(--border2);
+}
+.hero-stat:last-child { border-right: none; }
+.sv { font-family: var(--font-disp); font-size: 2.4rem; font-weight: 700; color: var(--blue); line-height: 1; margin-bottom: 6px; }
+.sl { font-size: 12px; color: var(--dim); font-family: var(--font-mono); }
+.hero-cta { display: flex; gap: 12px; margin-top: 36px; }
+.btn-primary {
+  padding: 12px 24px; border-radius: 8px; background: var(--blue); color: #fff;
+  font-family: var(--font-body); font-weight: 600; font-size: 14px;
+  border: none; cursor: pointer; transition: all 0.15s;
+}
+.btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+.btn-outline {
+  padding: 12px 24px; border-radius: 8px; background: transparent;
+  border: 1px solid var(--border2); color: var(--text2);
+  font-family: var(--font-body); font-weight: 500; font-size: 14px;
+  cursor: pointer; transition: all 0.15s;
+}
+.btn-outline:hover { border-color: var(--blue); color: var(--blue); }
+
+/* ══════════════════════════════════════════════════
+   SECTIONS
+══════════════════════════════════════════════════ */
+section { max-width: 1100px; margin: 0 auto; padding: 88px 36px; }
+section + section { border-top: 1px solid var(--border); }
+.s-head {
+  display: flex; gap: 20px; align-items: flex-start; margin-bottom: 48px;
+}
+.s-n {
+  font-family: var(--font-mono); font-size: 11px; color: var(--dim);
+  border: 1px solid var(--border2); border-radius: 4px;
+  padding: 4px 8px; flex-shrink: 0; margin-top: 4px;
+}
+.s-title {
+  font-family: var(--font-disp); font-size: 2rem; font-weight: 700;
+  color: var(--text); line-height: 1.2; margin-bottom: 8px;
+}
+.s-desc { font-size: 14px; color: var(--text2); max-width: 560px; }
+.sub-label {
+  display: block; font-family: var(--font-mono); font-size: 10px;
+  letter-spacing: 2px; text-transform: uppercase; color: var(--dim);
+  margin-bottom: 18px;
+}
+hr.r { border: none; border-top: 1px solid var(--border); margin: 44px 0 28px; }
+
+/* ══════════════════════════════════════════════════
+   CARDS
+══════════════════════════════════════════════════ */
+.card-row {
+  display: grid; grid-template-columns: repeat(3,1fr);
+  border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+  margin-bottom: 40px;
+}
+.card {
+  padding: 24px; background: var(--bg2);
+  border-right: 1px solid var(--border);
+}
+.card:last-child { border-right: none; }
+.c-tag {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--dim); margin-bottom: 10px;
+}
+.card h3 { font-size: 15px; font-weight: 600; margin-bottom: 10px; color: var(--text); }
+.card p { font-size: 13px; color: var(--text2); line-height: 1.65; }
+.tag-badge {
+  display: inline-block; margin-top: 14px;
+  font-family: var(--font-mono); font-size: 11px; padding: 4px 10px;
+  border-radius: 4px; background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--cyan);
+}
+
+/* ══════════════════════════════════════════════════
+   CALLOUT
+══════════════════════════════════════════════════ */
+.callout {
+  border: 1px solid var(--border); border-left: 3px solid var(--blue);
+  background: var(--bg2); padding: 16px 20px; margin-bottom: 36px;
+  font-size: 13px; color: var(--text2); line-height: 1.7; border-radius: 0 6px 6px 0;
+}
+.callout strong { color: var(--text); }
+.callout.warn { border-left-color: var(--amber); }
+.callout.success { border-left-color: var(--green); }
+
+/* ══════════════════════════════════════════════════
+   FORMULAS
+══════════════════════════════════════════════════ */
+.fml-row {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+  margin-bottom: 44px;
+}
+.fml {
+  padding: 20px; background: var(--bg2);
+  border-right: 1px solid var(--border);
+}
+.fml:last-child { border-right: none; }
+.fml-t { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--dim); margin-bottom: 12px; }
+.fml-e { font-family: var(--font-mono); font-size: 16px; color: var(--cyan); margin-bottom: 8px; font-weight: 700; }
+.fml-n { font-size: 12px; color: var(--text2); }
+.fml-n strong { color: var(--amber); }
+
+/* ══════════════════════════════════════════════════
+   STEPS
+══════════════════════════════════════════════════ */
+.steps { display: flex; flex-direction: column; gap: 0; margin-bottom: 44px; }
+.step {
+  display: flex; gap: 20px; padding: 18px 0;
+  border-bottom: 1px solid var(--border);
+}
+.step:first-child { border-top: 1px solid var(--border); }
+.step-icon {
+  flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid var(--border2); background: var(--bg3);
+  font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+  color: var(--blue); display: flex; align-items: center; justify-content: center;
+}
+.step-body h4 { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.step-body p { font-size: 13px; color: var(--text2); line-height: 1.6; }
+
+/* ══════════════════════════════════════════════════
+   TABLE
+══════════════════════════════════════════════════ */
+.tbl-wrap { overflow-x: auto; margin-bottom: 40px; border: 1px solid var(--border); border-radius: var(--radius); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th {
+  background: var(--bg3); padding: 11px 16px; text-align: left;
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.5px; color: var(--dim);
+  border-bottom: 1px solid var(--border);
+}
+td { padding: 11px 16px; border-bottom: 1px solid var(--border); color: var(--text2); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,0.02); }
+.td-pure { color: var(--amber); font-family: var(--font-mono); font-size: 12px; }
+.td-slot { color: var(--blue); font-family: var(--font-mono); font-size: 12px; }
+.td-highlight { color: var(--text); font-family: var(--font-mono); font-weight: 700; }
+
+/* ══════════════════════════════════════════════════
+   THROUGHPUT CHART
+══════════════════════════════════════════════════ */
+.chart-container {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden; margin-bottom: 40px;
+}
+.chart-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; border-bottom: 1px solid var(--border);
+}
+.chart-title { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--dim); }
+.chart-legend { display: flex; gap: 20px; align-items: center; font-size: 12px; color: var(--text2); }
+.legend-item { display: flex; align-items: center; gap: 8px; }
+.legend-line-pure { display: inline-block; width: 24px; height: 2px; background: var(--amber); border-top: 2px dashed var(--amber); }
+.legend-line-slot { display: inline-block; width: 24px; height: 2px; background: var(--blue); }
+#tp-canvas { display: block; width: 100%; padding: 8px; }
+
+/* ══════════════════════════════════════════════════
+   SIMULATION
+══════════════════════════════════════════════════ */
+.sim-outer {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+  overflow: hidden; margin-bottom: 32px;
+}
+.sim-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px; border-bottom: 1px solid var(--border);
+  background: var(--bg3);
+}
+.sim-header-title { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 2px; color: var(--dim); }
+.speed-badge { display: flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 10px; color: var(--green); }
+.speed-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: pulse 2s infinite; }
+.sim-body { display: grid; grid-template-columns: 260px 1fr; }
+.sim-ctrl {
+  padding: 20px; border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 18px;
+}
+.ctrl-group { display: flex; flex-direction: column; gap: 8px; }
+.ctrl-lbl {
+  font-family: var(--font-mono); font-size: 10px; text-transform: uppercase;
+  letter-spacing: 1px; color: var(--dim);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.ctrl-val { color: var(--cyan); font-weight: 700; }
+.rng-wrap input[type="range"] {
+  width: 100%; accent-color: var(--blue); height: 4px; cursor: pointer;
+}
+.proto-row { display: flex; gap: 6px; }
+.proto-b {
+  flex: 1; padding: 7px; border-radius: 5px; border: 1px solid var(--border2);
+  background: var(--bg3); color: var(--text2); font-family: var(--font-mono);
+  font-size: 11px; cursor: pointer; transition: all 0.15s;
+}
+.proto-b.on { background: rgba(59,158,255,0.15); color: var(--blue); border-color: rgba(59,158,255,0.4); }
+.run-btn {
+  padding: 10px; border-radius: 6px; border: 1px solid rgba(52,211,153,0.4);
+  background: rgba(52,211,153,0.12); color: var(--green);
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  cursor: pointer; transition: all 0.15s; margin-top: auto;
+}
+.run-btn:hover { background: rgba(52,211,153,0.22); }
+.run-btn.running { opacity: 0.6; cursor: wait; }
+.sim-vis-area { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.vis-panel { display: flex; flex-direction: column; gap: 6px; }
+.vis-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--dim); }
+canvas { display: block; width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; }
+.metrics-row {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 12px; margin-bottom: 20px;
+}
+.m-cell {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px; text-align: center;
+}
+.m-v { font-family: var(--font-disp); font-size: 1.8rem; font-weight: 700; color: var(--text); line-height: 1; margin-bottom: 4px; }
+.m-v.green { color: var(--green); }
+.m-v.red { color: var(--red); }
+.m-v.blue { color: var(--blue); }
+.m-l { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--dim); }
+.sim-log {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 14px; max-height: 180px; overflow-y: auto; font-family: var(--font-mono);
+  font-size: 11px; display: flex; flex-direction: column; gap: 3px; margin-bottom: 24px;
+}
+.log-entry { display: flex; gap: 12px; align-items: baseline; }
+.log-t { color: var(--dim); flex-shrink: 0; width: 44px; }
+.log-s { color: var(--green); }
+.log-c { color: var(--red); }
+.log-e { color: var(--dim); }
+.log-info { color: var(--dim); }
+.anim-wrapper {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 16px; margin-bottom: 8px;
+}
+.anim-ctrl-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.anim-btn {
+  padding: 5px 12px; border-radius: 5px; border: 1px solid var(--border2);
+  background: var(--bg3); color: var(--text2); font-family: var(--font-mono);
+  font-size: 10px; cursor: pointer; transition: all 0.15s;
+}
+.anim-btn.active { border-color: var(--green); color: var(--green); }
+.anim-speed-row { margin-left: auto; display: flex; gap: 4px; align-items: center; }
+.anim-spd-lbl { font-family: var(--font-mono); font-size: 10px; color: var(--dim); }
+.anim-spd-btn {
+  padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border2);
+  background: var(--bg3); color: var(--text2); font-family: var(--font-mono);
+  font-size: 10px; cursor: pointer;
+}
+.anim-spd-btn.on { color: var(--cyan); border-color: var(--cyan); }
+.anim-progress-wrap {
+  height: 4px; background: var(--bg3); border-radius: 2px;
+  margin-bottom: 8px; cursor: pointer; overflow: hidden;
+}
+.anim-progress-bar { height: 100%; background: var(--blue); width: 0; transition: width 0.1s; }
+
+/* ══════════════════════════════════════════════════
+   NUMERICALS
+══════════════════════════════════════════════════ */
+.num-tabs {
+  display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 24px;
+}
+.num-tab {
+  padding: 7px 14px; border-radius: 6px; border: 1px solid var(--border2);
+  background: var(--bg3); color: var(--text2); font-family: var(--font-mono);
+  font-size: 11px; cursor: pointer; transition: all 0.15s;
+}
+.num-tab.on { background: rgba(59,158,255,0.15); color: var(--blue); border-color: rgba(59,158,255,0.4); }
+.num-prob { display: none; }
+.num-prob.on { display: block; }
+.prob-card {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 28px; margin-bottom: 24px;
+}
+.p-num { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--blue); display: block; margin-bottom: 10px; }
+.prob-card h4 { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 16px; line-height: 1.5; }
+.given {
+  font-family: var(--font-mono); font-size: 11px; color: var(--dim);
+  background: var(--bg3); border-radius: 6px; padding: 10px 14px;
+  margin-bottom: 18px; display: flex; gap: 10px; align-items: baseline;
+}
+.g-lbl {
+  color: var(--amber); font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1px; font-size: 10px; flex-shrink: 0;
+}
+.sol-steps { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+.sol { display: flex; gap: 12px; align-items: baseline; font-size: 13px; }
+.sol-n {
+  flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--bg4); border: 1px solid var(--border2);
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700; color: var(--dim);
+  display: flex; align-items: center; justify-content: center;
+}
+.sol-c { color: var(--text2); line-height: 1.6; }
+.ans {
+  background: rgba(52,211,153,0.07); border: 1px solid rgba(52,211,153,0.25);
+  border-radius: 6px; padding: 12px 16px; font-size: 13px; color: var(--text);
+  line-height: 1.7;
+}
+.correct { color: var(--green); margin-right: 6px; font-weight: 700; }
+
+/* Solver */
+.solver {
+  background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--radius);
+  overflow: hidden; margin-top: 32px;
+}
+.solver-header {
+  background: var(--bg3); padding: 12px 20px; border-bottom: 1px solid var(--border);
+}
+.solver-header-lbl { font-family: var(--font-mono); font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--dim); }
+.solver-body { padding: 24px; }
+.sol-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 20px; }
+.sf label { display: block; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--dim); margin-bottom: 6px; }
+.sf input, .sf select {
+  width: 100%; padding: 9px 12px; background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: 6px; color: var(--text); font-family: var(--font-mono); font-size: 12px;
+  outline: none; transition: border-color 0.15s;
+}
+.sf input:focus, .sf select:focus { border-color: var(--blue); }
+.calc-btn {
+  padding: 10px 24px; border-radius: 6px; background: var(--blue); color: #fff;
+  border: none; font-family: var(--font-mono); font-weight: 700; font-size: 13px;
+  cursor: pointer; transition: all 0.15s; margin-bottom: 16px;
+}
+.calc-btn:hover { opacity: 0.88; }
+#sol-out { display: none; background: var(--bg3); border-radius: 6px; padding: 18px; border: 1px solid var(--border2); }
+.sol-out-title { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--dim); display: block; margin-bottom: 12px; }
+.sr { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.sr:last-child { border-bottom: none; }
+.sk { font-family: var(--font-mono); font-size: 11px; color: var(--text2); }
+.sv2 { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--cyan); }
+
+/* ══════════════════════════════════════════════════
+   COMPARISON
+══════════════════════════════════════════════════ */
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 40px; }
+.compare-col { padding: 28px; background: var(--bg2); }
+.compare-col:first-child { border-right: 1px solid var(--border); }
+.compare-col-header { font-family: var(--font-mono); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: var(--text); }
+.pure-dot { width: 8px; height: 8px; background: var(--amber); flex-shrink: 0; border-radius: 1px; }
+.slot-dot { width: 8px; height: 8px; background: var(--blue); flex-shrink: 0; border-radius: 1px; }
+.compare-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; align-items: flex-start; }
+.compare-item:last-child { border-bottom: none; }
+.compare-icon { color: var(--green); font-family: var(--font-mono); flex-shrink: 0; }
+.compare-icon.con { color: var(--red); }
+.compare-text { color: var(--text2); line-height: 1.5; }
+.prob-table-wrap { overflow-x: auto; margin-bottom: 32px; border: 1px solid var(--border); border-radius: var(--radius); }
+.prob-cell-bar { display: flex; align-items: center; gap: 8px; }
+.prob-bar { height: 6px; background: var(--blue); border-radius: 3px; min-width: 2px; }
+.prob-bar.pure { background: var(--amber); }
+
+/* ══════════════════════════════════════════════════
+   VIDEO & REFS
+══════════════════════════════════════════════════ */
+.vid-wrap { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.vid-wrap iframe { width: 100%; height: 500px; display: block; border: none; }
+.ref-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+.ref-card {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 20px; transition: border-color 0.2s;
+}
+.ref-card:hover { border-color: var(--border2); }
+.r-type { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--dim); margin-bottom: 8px; }
+.ref-card h4 { font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text); }
+.ref-card p { font-size: 12px; color: var(--text2); line-height: 1.6; margin-bottom: 12px; }
+.ref-link { font-family: var(--font-mono); font-size: 11px; color: var(--blue); }
+.ref-link:hover { text-decoration: underline; }
+
+/* ══════════════════════════════════════════════════
+   FOOTER
+══════════════════════════════════════════════════ */
+footer {
+  border-top: 1px solid var(--border); padding: 32px 36px;
+  display: flex; align-items: center; justify-content: space-between;
+  font-family: var(--font-mono); font-size: 11px; color: var(--dim);
+  max-width: 100%;
+}
+footer span { color: var(--text2); }
+
+/* ══════════════════════════════════════════════════
+   MODAL
+══════════════════════════════════════════════════ */
+.modal-bg {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(6px); z-index: 999; align-items: center; justify-content: center;
+}
+.modal-bg.open { display: flex; }
+.modal {
+  background: var(--bg2); border: 1px solid var(--border2); border-radius: var(--radius);
+  padding: 32px; max-width: 540px; width: 90%; position: relative;
+}
+.modal h3 { font-family: var(--font-disp); font-size: 1.4rem; margin-bottom: 20px; }
+.modal ul { padding-left: 20px; display: flex; flex-direction: column; gap: 10px; font-size: 13px; color: var(--text2); }
+.modal li strong { color: var(--text); }
+.m-close {
+  position: absolute; top: 16px; right: 16px;
+  background: var(--bg3); border: 1px solid var(--border2); color: var(--text2);
+  border-radius: 6px; padding: 5px 10px; font-family: var(--font-mono); font-size: 11px; cursor: pointer;
+}
+
+/* ══════════════════════════════════════════════════
+   ANIMATIONS
+══════════════════════════════════════════════════ */
+.fade-in { opacity: 0; transform: translateY(16px); transition: opacity 0.55s ease, transform 0.55s ease; }
+.fade-in.visible { opacity: 1; transform: translateY(0); }
+
+/* ══════════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .card-row { grid-template-columns: 1fr; }
+  .card { border-right: none; border-bottom: 1px solid var(--border); }
+  .fml-row { grid-template-columns: 1fr 1fr; }
+  .sol-grid { grid-template-columns: 1fr 1fr; }
+  .ref-grid { grid-template-columns: 1fr 1fr; }
+  .sim-body { grid-template-columns: 1fr; }
+  .sim-ctrl { border-right: none; border-bottom: 1px solid var(--border); }
+  .hero-sub { grid-template-columns: 1fr; gap: 20px; }
+  .hero-grid { grid-template-columns: 1fr; }
+  .hero-stat { border-right: none; border-bottom: 1px solid var(--border2); }
+}
+@media (max-width: 640px) {
+  .nav-links { display: none; }
+  section, #hero { padding: 60px 20px; }
+  .metrics-row { grid-template-columns: 1fr 1fr; }
+  .compare-grid { grid-template-columns: 1fr; }
+  .compare-col:first-child { border-right: none; border-bottom: 1px solid var(--border); }
+  .fml-row { grid-template-columns: 1fr; }
+  .ref-grid { grid-template-columns: 1fr; }
+  .hero-h { font-size: 2.8rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════ NAVBAR ══════════════════ -->
+<nav>
+  <a class="nav-brand" href="#hero">
+    <div class="nav-brand-icon">AL</div>
+    <div class="nav-brand-text">
+      <span class="nav-brand-title">ALOHAnet</span>
+      <span class="nav-brand-sub">Interactive Protocol Lab</span>
+    </div>
+  </a>
+  <div class="nav-links">
+    <button class="nav-link on" onclick="navGo('concept', this)">⬡ Concepts</button>
+    <button class="nav-link" onclick="navGo('throughput', this)">↗ Throughput</button>
+    <button class="nav-link" onclick="navGo('simulation', this)">⚙ Simulator</button>
+    <button class="nav-link" onclick="navGo('numerical', this)">∑ Numericals</button>
+    <button class="nav-link" onclick="navGo('compare', this)">⇌ Compare</button>
+    <button class="nav-link" onclick="navGo('video', this)">▶ Video</button>
+    <button class="nav-link" onclick="navGo('references', this)">⊙ Refs</button>
+  </div>
+  <div class="nav-actions">
+    <button class="icon-btn" id="themeBtn" onclick="toggleTheme()">☀ Light</button>
+    <button class="icon-btn" onclick="openHelp()">? Help</button>
+    <button class="dl-btn" onclick="dlPage()">↓ Download</button>
+  </div>
+</nav>
+
+<!-- ══════════════════ HERO ══════════════════ -->
+<div id="hero">
+  <div class="hero-label">Computer Networks · BCSE308L · VIT Chennai</div>
+  <h1 class="hero-h">
+    <span class="line1">Pure &amp;</span>
+    <span class="hollow">Slotted ALOHA</span>
+  </h1>
+  <div class="hero-sub">
+    <p class="hero-p">
+      Random-access MAC protocol family — no central coordination, collision-driven retransmission.
+      Developed at the University of Hawaii, 1970. Foundation of all modern CSMA-based protocols.
+    </p>
+    <div class="hero-quick">
+      <div class="hero-quick-item"><span>1970</span> ALOHAnet born at UH</div>
+      <div class="hero-quick-item"><span>2×</span> Slotted vs Pure max S</div>
+      <div class="hero-quick-item"><span>1/e</span> Universal efficiency bound</div>
+    </div>
+  </div>
+  <div class="hero-grid">
+    <div class="hero-stat">
+      <div class="sv">18.4%</div>
+      <div class="sl">Pure ALOHA Max Throughput</div>
+    </div>
+    <div class="hero-stat">
+      <div class="sv">36.8%</div>
+      <div class="sl">Slotted ALOHA Max Throughput</div>
+    </div>
+    <div class="hero-stat">
+      <div class="sv">1/e</div>
+      <div class="sl">Slotted Peak at G = 1</div>
+    </div>
+  </div>
+  <div class="hero-cta">
+    <button class="btn-primary" onclick="navGo('simulation', document.querySelector('.nav-link'))">⚙ Run Simulator</button>
+    <button class="btn-outline" onclick="navGo('numerical', document.querySelector('.nav-link'))">∑ Solve Problems</button>
+  </div>
+</div>
+
+<!-- ══════════════════ CONCEPTS ══════════════════ -->
+<section id="concept">
+  <div class="s-head">
+    <span class="s-n">01</span>
+    <div>
+      <div class="s-title">What is ALOHA?</div>
+      <p class="s-desc">A contention-based MAC protocol where stations transmit without central coordination, handling collisions via random back-off retransmission.</p>
+    </div>
+  </div>
+
+  <div class="card-row fade-in">
+    <div class="card">
+      <div class="c-tag">Background · 1970</div>
+      <h3>Origin</h3>
+      <p>Designed by Norman Abramson at the University of Hawaii for satellite and packet-radio networks across the islands. Stations transmit frames whenever data is ready — no prior scheduling, no carrier sensing.</p>
+      <span class="tag-badge">ALOHAnet</span>
+    </div>
+    <div class="card">
+      <div class="c-tag">Pure ALOHA</div>
+      <h3>Fully Asynchronous</h3>
+      <p>Stations transmit at <strong>any instant</strong>. On collision, each sender waits a <strong>random back-off</strong> delay and retransmits. Max theoretical throughput: <strong>18.4%</strong> at G = 0.5.</p>
+      <span class="tag-badge">S = G · e<sup>−2G</sup></span>
+    </div>
+    <div class="card">
+      <div class="c-tag">Slotted ALOHA · 1972</div>
+      <h3>Time-Synchronised</h3>
+      <p>Proposed by Roberts (1972). Time divided into equal slots. Stations begin only at <strong>slot boundaries</strong> — halves collision window, doubles throughput to <strong>36.8%</strong>.</p>
+      <span class="tag-badge">S = G · e<sup>−G</sup></span>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Key Insight:</strong> In Pure ALOHA, a frame can collide with any other frame that starts within ±1 frame duration — giving a <em>vulnerable period of 2T<sub>p</sub></em>.
+    Slotted ALOHA forces all frames to start at slot boundaries, so two frames either collide entirely or not at all, reducing the vulnerable period to <em>T<sub>p</sub></em>.
+  </div>
+
+  <hr class="r"/>
+  <span class="sub-label">Key Parameters Compared</span>
+  <div class="tbl-wrap fade-in">
+    <table>
+      <thead>
+        <tr><th>Parameter</th><th>Pure ALOHA</th><th>Slotted ALOHA</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Time Reference</td><td class="td-pure">Continuous</td><td class="td-slot">Discrete slots</td></tr>
+        <tr><td>Transmission Rule</td><td class="td-pure">Any instant</td><td class="td-slot">Slot boundary only</td></tr>
+        <tr><td>Vulnerable Period</td><td class="td-pure">2 × T<sub>p</sub></td><td class="td-slot">1 × T<sub>p</sub></td></tr>
+        <tr><td>Throughput Formula</td><td class="td-pure">S = G · e<sup>−2G</sup></td><td class="td-slot">S = G · e<sup>−G</sup></td></tr>
+        <tr><td>Max Throughput S</td><td class="td-pure">≈ 18.4%</td><td class="td-slot">≈ 36.8%</td></tr>
+        <tr><td>Optimal Load G*</td><td class="td-pure">0.5</td><td class="td-slot">1.0</td></tr>
+        <tr><td>Clock Sync Required</td><td class="td-pure">No</td><td class="td-slot">Yes</td></tr>
+        <tr><td>Collision Window</td><td class="td-pure">2 frame durations</td><td class="td-slot">1 frame duration</td></tr>
+        <tr><td>P(Success) optimum p</td><td class="td-pure">p = 1/(2k)</td><td class="td-slot">p = 1/k</td></tr>
+        <tr><td>P(Empty slot/period)</td><td class="td-pure">e<sup>−2G</sup></td><td class="td-slot">e<sup>−G</sup></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr class="r"/>
+  <span class="sub-label">Core Formulae</span>
+  <div class="fml-row fade-in">
+    <div class="fml">
+      <div class="fml-t">Pure ALOHA — Throughput</div>
+      <div class="fml-e">S = G · e<sup>−2G</sup></div>
+      <div class="fml-n">Max S = 1/(2e) ≈ <strong>0.184</strong> at G = 0.5</div>
+    </div>
+    <div class="fml">
+      <div class="fml-t">Slotted ALOHA — Throughput</div>
+      <div class="fml-e">S = G · e<sup>−G</sup></div>
+      <div class="fml-n">Max S = 1/e ≈ <strong>0.368</strong> at G = 1.0</div>
+    </div>
+    <div class="fml">
+      <div class="fml-t">P(Success) — k Stations</div>
+      <div class="fml-e">P<sub>s</sub> = kp(1−p)<sup>k−1</sup></div>
+      <div class="fml-n">Optimal p = 1/k → P<sub>s,max</sub> = (1−1/k)<sup>k−1</sup></div>
+    </div>
+    <div class="fml">
+      <div class="fml-t">P(Collision) — Slotted</div>
+      <div class="fml-e">P<sub>c</sub> = 1 − e<sup>−G</sup>(1+G)</div>
+      <div class="fml-n">= 1 − P(empty) − P(success)</div>
+    </div>
+  </div>
+
+  <hr class="r"/>
+  <span class="sub-label">Pure ALOHA — Protocol Steps</span>
+  <div class="steps fade-in" style="margin-bottom:44px">
+    <div class="step"><div class="step-icon">01</div><div class="step-body"><h4>Frame Arrival</h4><p>A station generates a frame and immediately transmits it onto the shared channel — no carrier sense, no idle check, no wait.</p></div></div>
+    <div class="step"><div class="step-icon">02</div><div class="step-body"><h4>ACK / Collision Detection</h4><p>If the receiver ACKs within a timeout T<sub>ACK</sub>, the transmission succeeded. No ACK → collision assumed. Both frames are destroyed.</p></div></div>
+    <div class="step"><div class="step-icon">03</div><div class="step-body"><h4>Random Back-off</h4><p>Each colliding station waits a uniformly random T<sub>back</sub> drawn from [0, 2<sup>k</sup>−1] frame durations, where k is the retry count (binary exponential back-off).</p></div></div>
+    <div class="step"><div class="step-icon">04</div><div class="step-body"><h4>Retransmission</h4><p>After back-off, the station retransmits the frame. This repeats until ACK received or max retry limit M reached.</p></div></div>
+  </div>
+
+  <span class="sub-label">Slotted ALOHA — Protocol Steps</span>
+  <div class="steps fade-in">
+    <div class="step"><div class="step-icon">01</div><div class="step-body"><h4>Global Clock Synchronisation</h4><p>All stations are synchronised to a global clock that divides time into equal slots of exactly T<sub>p</sub> duration (one frame transmission time).</p></div></div>
+    <div class="step"><div class="step-icon">02</div><div class="step-body"><h4>Slot-Boundary Transmission Only</h4><p>If a frame arrives mid-slot, the station buffers it and waits for the next slot boundary. No transmission starts in the middle of a slot.</p></div></div>
+    <div class="step"><div class="step-icon">03</div><div class="step-body"><h4>Reduced Collision Window</h4><p>Two frames either start in the same slot (full collision) or in different slots (no collision). The vulnerable period is halved from 2T<sub>p</sub> to T<sub>p</sub>.</p></div></div>
+    <div class="step"><div class="step-icon">04</div><div class="step-body"><h4>Slot-Based Back-off & Retry</h4><p>On collision, each station independently picks a random future slot number to retransmit. This reduces the probability of repeated collisions between the same stations.</p></div></div>
+  </div>
+</section>
+
+<!-- ══════════════════ THROUGHPUT ══════════════════ -->
+<section id="throughput">
+  <div class="s-head">
+    <span class="s-n">02</span>
+    <div>
+      <div class="s-title">S vs G Curve</div>
+      <p class="s-desc">Theoretical throughput vs. offered load. Slotted ALOHA peaks at exactly double the Pure ALOHA maximum.</p>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>Reading the chart:</strong> x-axis = offered load G (frames generated per frame time), y-axis = throughput S (successfully delivered frames per frame time).
+    Both curves peak then fall — overloading causes a collision cascade. <span style="color:var(--amber)">Amber dashed</span> = Pure ALOHA; <span style="color:var(--blue)">Blue solid</span> = Slotted.
+  </div>
+
+  <div class="chart-container fade-in">
+    <div class="chart-header">
+      <div class="chart-title">Throughput S vs. Offered Load G</div>
+      <div class="chart-legend">
+        <div class="legend-item"><span class="legend-line-pure"></span>Pure ALOHA S = G·e<sup>−2G</sup></div>
+        <div class="legend-item"><span class="legend-line-slot"></span>Slotted ALOHA S = G·e<sup>−G</sup></div>
+      </div>
+    </div>
+    <canvas id="tp-canvas" height="360"></canvas>
+  </div>
+
+  <span class="sub-label">Throughput Values at Selected G</span>
+  <div class="tbl-wrap">
+    <table id="throughput-table">
+      <thead>
+        <tr>
+          <th>G (Offered Load)</th>
+          <th>Pure S = G·e<sup>−2G</sup></th>
+          <th>Pure S (%)</th>
+          <th>Slotted S = G·e<sup>−G</sup></th>
+          <th>Slotted S (%)</th>
+          <th>Ratio Slotted/Pure</th>
+        </tr>
+      </thead>
+      <tbody id="throughput-tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="card-row fade-in">
+    <div class="card">
+      <div class="c-tag">Pure ALOHA Peak</div>
+      <h3>S = 0.184 at G = 0.5</h3>
+      <p>Channel must be loaded at 50% to achieve maximum utilisation. Collision probability rises quadratically beyond G = 0.5 due to the 2T<sub>p</sub> vulnerable period.</p>
+    </div>
+    <div class="card">
+      <div class="c-tag">Slotted ALOHA Peak</div>
+      <h3>S = 0.368 at G = 1.0</h3>
+      <p>Full channel load (G=1) yields maximum throughput. Synchronised slots eliminate partial collisions — two frames either coincide fully or not at all.</p>
+    </div>
+    <div class="card">
+      <div class="c-tag">Overload Region G &gt; 1</div>
+      <h3>Collision Cascade</h3>
+      <p>Beyond the peak G, throughput decreases sharply. Heavy retransmissions increase G further — a <strong>positive feedback loop</strong> that can collapse the channel.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ SIMULATION ══════════════════ -->
+<section id="simulation">
+  <div class="s-head">
+    <span class="s-n">03</span>
+    <div>
+      <div class="s-title">Channel Simulator</div>
+      <p class="s-desc">Discrete-event simulation of the ALOHA channel. Each slot is independently simulated with a Bernoulli arrival model.</p>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <strong>Simulation Model:</strong> Each station independently transmits in any given slot (or instant) with probability p = G/N, where G is offered load and N is station count.
+    A slot/period is successful if <em>exactly one</em> station transmits.
+  </div>
+
+  <div class="sim-outer">
+    <div class="sim-header">
+      <div class="sim-header-title">Channel Parameters</div>
+      <div class="speed-badge"><span class="speed-dot"></span> Live simulation engine</div>
+    </div>
+    <div class="sim-body">
+      <div class="sim-ctrl">
+        <div class="ctrl-group">
+          <div class="ctrl-lbl">Protocol</div>
+          <div class="proto-row">
+            <button class="proto-b on" id="b-pure" onclick="setProto('pure')">Pure</button>
+            <button class="proto-b" id="b-slot" onclick="setProto('slotted')">Slotted</button>
+          </div>
+        </div>
+        <div class="ctrl-group">
+          <div class="ctrl-lbl">Stations <span class="ctrl-val" id="v-sta">4</span></div>
+          <div class="rng-wrap"><input type="range" id="s-sta" min="2" max="12" value="4" oninput="updVals()"/></div>
+        </div>
+        <div class="ctrl-group">
+          <div class="ctrl-lbl">Offered Load G <span class="ctrl-val" id="v-g">0.5</span></div>
+          <div class="rng-wrap"><input type="range" id="s-g" min="1" max="30" value="5" oninput="updVals()"/></div>
+        </div>
+        <div class="ctrl-group">
+          <div class="ctrl-lbl">Time Slots <span class="ctrl-val" id="v-sl">24</span></div>
+          <div class="rng-wrap"><input type="range" id="s-sl" min="10" max="60" value="24" oninput="updVals()"/></div>
+        </div>
+        <button class="run-btn" id="runBtn" onclick="runSim()">▶&nbsp; Run Simulation</button>
+      </div>
+      <div class="sim-vis-area">
+        <div class="vis-panel">
+          <div class="vis-label">Channel View — All Stations Overlaid</div>
+          <canvas id="sim-canvas" height="180"></canvas>
+        </div>
+        <div class="vis-panel">
+          <div class="vis-label">Per-Station Activity Timeline</div>
+          <canvas id="tl-canvas" height="140"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="metrics-row">
+    <div class="m-cell"><div class="m-v" id="m-sent">—</div><div class="m-l">Frames Sent</div></div>
+    <div class="m-cell"><div class="m-v green" id="m-succ">—</div><div class="m-l">Successful</div></div>
+    <div class="m-cell"><div class="m-v red" id="m-coll">—</div><div class="m-l">Collisions</div></div>
+    <div class="m-cell"><div class="m-v blue" id="m-tp">—</div><div class="m-l">Throughput S</div></div>
+  </div>
+
+  <div class="sim-log" id="sim-log">
+    <div class="log-entry"><span class="log-t">—</span><span class="log-info">Simulation not yet run. Set parameters and click Run.</span></div>
+  </div>
+
+  <div class="anim-wrapper">
+    <div class="vis-label" style="margin-bottom:10px">Animated Slot-by-Slot Replay</div>
+    <div class="anim-ctrl-row">
+      <button class="anim-btn" id="anim-play-btn" onclick="animPlay()">▶ Play</button>
+      <button class="anim-btn" onclick="animPause()">⏸ Pause</button>
+      <button class="anim-btn" onclick="animReset()">↺ Reset</button>
+      <span style="font-family:var(--font-mono);font-size:10px;color:var(--dim);margin-left:6px" id="anim-slot-label">Slot: —</span>
+      <div class="anim-speed-row">
+        <span class="anim-spd-lbl">Speed</span>
+        <button class="anim-spd-btn on" onclick="setAnimSpeed(600,this)">1×</button>
+        <button class="anim-spd-btn" onclick="setAnimSpeed(280,this)">2×</button>
+        <button class="anim-spd-btn" onclick="setAnimSpeed(100,this)">4×</button>
+      </div>
+    </div>
+    <div class="anim-progress-wrap" onclick="animSeek(event,this)">
+      <div class="anim-progress-bar" id="anim-progress"></div>
+    </div>
+    <canvas id="anim-canvas" height="120"></canvas>
+  </div>
+</section>
+
+<!-- ══════════════════ NUMERICALS ══════════════════ -->
+<section id="numerical">
+  <div class="s-head">
+    <span class="s-n">04</span>
+    <div>
+      <div class="s-title">Solved Problems</div>
+      <p class="s-desc">Eight fully-worked numerical problems covering throughput, probability, load comparison, inverse problems, and channel analysis.</p>
+    </div>
+  </div>
+
+  <div class="num-tabs">
+    <button class="num-tab on"  onclick="showP(0)">P1</button>
+    <button class="num-tab"     onclick="showP(1)">P2</button>
+    <button class="num-tab"     onclick="showP(2)">P3</button>
+    <button class="num-tab"     onclick="showP(3)">P4</button>
+    <button class="num-tab"     onclick="showP(4)">P5</button>
+    <button class="num-tab"     onclick="showP(5)">P6</button>
+    <button class="num-tab"     onclick="showP(6)">P7</button>
+    <button class="num-tab"     onclick="showP(7)">P8</button>
+  </div>
+
+  <div class="num-prob on" id="p0">
+    <div class="prob-card">
+      <span class="p-num">Problem 01 — Pure ALOHA Throughput at Peak</span>
+      <h4>Find the maximum throughput of a Pure ALOHA system and the offered load G at which it occurs.</h4>
+      <div class="given"><span class="g-lbl">Given</span>Protocol: Pure ALOHA &nbsp;|&nbsp; Find max S and optimal G</div>
+      <div class="sol-steps">
+        <div class="sol"><span class="sol-n">1</span><span class="sol-c">Pure ALOHA throughput formula: <code>S = G · e^(−2G)</code></span></div>
+        <div class="sol"><span class="sol-n">2</span><span class="sol-c">Differentiate and set to zero: <code>dS/dG = e^(−2G) − 2G·e^(−2G) = e^(−2G)(1 − 2G) = 0</code></span></div>
+        <div class="sol"><span class="sol-n">3</span><span class="sol-c">Solve: <code>1 − 2G = 0  →  G* = 0.5</code></span></div>
+        <div class="sol"><span class="sol-n">4</span><span class="sol-c">Substitute G = 0.5: <code>S = 0.5 × e^(−1) = 0.5 × 0.3679 = 0.1839</code></span></div>
+        <div class="sol"><span class="sol-n">5</span><span class="sol-c">Maximum: <code>S_max = 1/(2e) ≈ 0.184 → 18.4%</code></span></div>
+      </div>
+      <div class="ans"><span class="correct">✓</span> Optimal G = 0.5 &nbsp;|&nbsp; Maximum Throughput S = 1/(2e) ≈ <strong>18.4%</strong></div>
+    </div>
+  </div>
+
+  <div class="num-prob" id="p1">
+    <div class="prob-card">
+      <span class="p-num">Problem 02 — Slotted ALOHA Full Analysis at G = 1</span>
+      <h4>A Slotted ALOHA system has G = 1.0. Find throughput, P(empty slot), and P(collision).</h4>
+      <div class="given"><span class="g-lbl">Given</span>Protocol: Slotted ALOHA &nbsp;|&nbsp; G = 1.0</div>
+      <div class="sol-steps">
+        <div class="sol"><span class="sol-n">1</span><span class="sol-c">Slotted formula: <code>S = G · e^(−G) = 1.0 × e^(−1) = 0.3679</code></span></div>
+        <div class="sol"><span class="sol-n">2</span><span class="sol-c">P(empty): <code>P(0) = e^(−G) = e^(−1) = 0.3679</code></span></div>
+        <div class="sol"><span class="sol-n">3</span><span class="sol-c">P(success) = S: <code>P(1) = G·e^(−G) = 1×e^(−1) = 0.3679</code></span></div>
+        <div class="sol"><span class="sol-n">4</span><span class="sol-c">P(collision): <code>P(c) = 1 − 0.3679 − 0.3679 = 0.2642</code></span></div>
+        <div class="sol"><span class="sol-n">5</span><span class="sol-c">Verify: <code>0.3679 + 0.3679 + 0.2642 = 1.0 ✓</code></span></div>
+      </div>
+      <div class="ans"><span class="correct">✓</span> S = 36.79% &nbsp;|&nbsp; P(empty) = 36.79% &nbsp;|&nbsp; P(success) = 36.79% &nbsp;|&nbsp; P(collision) = 26.42%</div>
+    </div>
+  </div>
+
+  <div class="num-prob" id="p2">
+    <div class="prob-card">
+      <span class="p-num">Problem 03 — Load Comparison at Multiple G Values</span>
+      <h4>Compare Pure and Slotted ALOHA throughput at G = 0.25, 0.5, 1.0, and 2.0.</h4>
+      <div class="given"><span class="g-lbl">Given</span>G = {0.25, 0.5, 1.0, 2.0} &nbsp;|&nbsp; Both protocols</div>
+      <div class="sol-steps">
+        <div class="sol"><span class="sol-n">1</span><span class="sol-c">G=0.25 Pure: <code>S = 0.25 × e^(−0.5) = 0.25 × 0.6065 = 0.1516 (15.16%)</code></span></div>
+        <div class="sol"><span class="sol-n">2</span><span class="sol-c">G=0.25 Slotted: <code>S = 0.25 × e^(−0.25) = 0.25 × 0.7788 = 0.1947 (19.47%)</code></span></div>
+        <div class="sol"><span class="sol-n">3</span><span class="sol-c">G=0.5 Pure: <code>S = 0.5 × e^(−1) = 0.1839 (18.39%)</code> ← Peak Pure</span></div>
+        <div class="sol"><span class="sol-n">4</span><span class="sol-c">G=0.5 Slotted: <code>S = 0.5 × e^(−0.5) = 0.5 × 0.6065 = 0.3033 (30.33%)</code></span></div>
+        <div class="sol"><span class="sol-n">5</span><span class="sol-c">G=1.0 Pure: <code>S = 1.0 × e^(−2) = 0.1353 (13.53%)</code></span></div>
+        <div class="sol"><span class="sol-n">6</span><span class="sol-c">G=1.0 Slotted: <code>S = 1.0 × e^(−1) = 0.3679 (36.79%)</code> ← Peak Slotted</span></div>
+        <div class="sol"><span class="sol-n">7</span><span class="sol-c">G=2.0 Pure: <code>S = 2.0 × e^(−4) = 0.0366 (3.66%)</code></span></div>
+        <div class="sol"><span class="sol-n">8</span><span class="sol-c">G=2.0 Slotted: <code>S = 2.0 × e^(−2) = 0.2707 (27.07%)</code></span></div>
+      </div>
+      <div class="ans"><span class="correct">✓</span> Slotted ALOHA always outperforms Pure ALOHA at the same offered load. At G = 2.0: Pure drops to 3.66% while Slotted retains 27.07%.</div>
+    </div>
+  </div>
+
+  <div class="num-prob" id="p3">
+    <div class="prob-card">
+      <span class="p-num">Problem 04 — Probability of Successful Transmission</span>
+      <h4>5 stations in Slotted ALOHA, each transmitting with p = 0.2 per slot. Find P(exactly one transmits) and the optimal p.</h4>
+      <div class="given"><span class="g-lbl">Given</span>k = 5 &nbsp;|&nbsp; p = 0.2 &nbsp;|&nbsp; Slotted ALOHA</div>
+      <div class="sol-steps">
+        <div class="sol"><span class="sol-n">1</span><span class="sol-c">P(success) formula: <code>P_s = C(k,1) · p · (1−p)^(k−1) = k·p·(1−p)^(k−1)</code></span></div>
+        <div class="sol"><span class="sol-n">2</span><span class="sol-c">Compute (1−p)^(k−1): <code>(1 − 0.2)^4 = (0.8)^4 = 0.4096</code></span></div>
+        <div class="sol"><span class="sol-n">3</span><span class="sol-c">Per station: <code>p · (1−p)^4 = 0.2 × 0.4096 = 0.08192</code></span></div>
+        <div class="sol"><span class="sol-n">4</span><span class="sol-c">All k stations: <code>P_s = 5 × 0.08192 = 0.4096</code></span></div>
+        <div class="sol"><span class="sol-n">5</span><span class="sol-c">Optimal p = 1/k = 1/5 = 0.2 — already at optimal!</span></div>
+        <div class="sol"><span class="sol-n">6</span><span class="sol-c">Max P_s at p* = 1/k: <code>(1 − 1/5)^4 = (0.8)^4 = 0.4096</code></span></div>
+      </div>
+      <div class="ans"><span class="correct">✓</span> P(successful transmission) = 0.4096 = <strong>40.96%</strong> &nbsp;|&nbsp; Optimal p = 1/k = 0.2 ✓ (already optimal)</div>
+    </div>
+  </div>
+
+  <div class="num-prob" id="p4">
+    <div class="prob-card">
+      <span class="p-num">Problem 05 — Find G Given Throughput (Inverse Problem)</span>
+      <h4>Pure ALOHA throughput is 0.10. Find all possible values of G.</h4>
+      <div class="given"><span class="g-lbl">Given</span>Protocol: Pure ALOHA &nbsp;|&nbsp; S = 0.10</div>
+      <div class="sol-steps">
+        <div class="sol"><span class="sol-n">1</span><span class="sol-c">Equation: <code>0.10 = G · e^(−2G)</code> — transcendental, two solutions exist.</span></div>
+        <div class="sol"><span class="sol-n">2</span><span class="sol-c">S_max = 0.184 &gt; 0.10, so two solutions: one below G=0.5 (stable) and one above (unstable).</span></div>
+        <div class="sol"><span class="sol-n">3</span><span class="sol-c">Solution 1 (G &lt; 0.5): G ≈ 0.13: <code>0.13 × e^(−0.26) = 0.13 × 0.7710 ≈ 0.100 ✓</code></span></div>
+        <div class="sol"><span class="sol-n">4</span><span class="sol-c">Solution 2 (G &gt; 0.5): G ≈ 1.26: <code>1.26 × e^(−2.52) = 1.26 × 0.0806 ≈ 0.102 ≈ 0.10 ✓</code></span></div>
+        <div class="sol"><span class="sol-n">5</span><span class="sol-c">G₁ ≈ 0.13 is the <strong>stable</strong> operating point. G₂ ≈ 1.26 is <strong>unstable</strong> — collisions increase G further.</span></div>
+      </div>
+      <div class="ans"><span class="correct">✓</span> G₁ ≈ 0.13 (stable, lightly loaded) &nbsp;&nbsp; G₂ ≈ 1.26 (unstable, overloaded)</div>
+    </div>
+  </div>
+
+  <div class="num-prob" id="p5">
+    <div class="prob-card">
+      <span class="p-num">Problem 06 — Channel Throughput in Kbps</span>
+      <h4>A Pure ALOHA channel has bandwidth 200 kbps and frame size 1000 bits. If G = 0.5, find throughput in frames/sec and in kbps.</h4>
+      <div class="given"><span class="g-lbl">Given</span>BW = 200 kbps &nbsp;|&nbsp; Frame = 1000 bits &nbsp;|&nbsp; G = 0.5 &nbsp;|&nbsp; Pure ALOHA</div>
+      <div class="sol-steps">
+        <div class="sol"><span class="sol-n">1</span><span class="sol-c">Frame transmission time: <code>T_p = 1000 / 200,000 = 5 ms</code></span></div>
+        <div class="sol"><span class="sol-n">2</span><span class="sol-c">Max frames/sec: <code>R = 1 / T_p = 1 / 0.005 = 200 frames/sec</code></span></div>
+        <div class="sol"><span class="sol-n">3</span><span class="sol-c">Throughput S at G = 0.5: <code>S = 0.5 × e^(−1) = 0.1839</code></span></div>
+        <div class="sol"><span class="sol-n">4</span><span class="sol-c">Successful frames/sec: <code>S × R = 0.1839 × 200 = 36.79 frames/sec</code></span></div>
+        <div class="sol"><span class="sol-n">5</span><span class="sol-c">Effective throughput: <code>36.79 × 1000 = 36,788 bps ≈ 36.79 kbps</code></span></div>
+      </div>
+      <div class="ans"><span class="correct">✓</span> Throughput = 36.79 frames/sec = <strong>36.79 kbps</strong> (18.4% of 200 kbps channel capacity)</div>
+    </div>
+  </div>
+
+  <div class="num-prob" id="p6">
+    <div class="prob-card">
+      <span class="p-num">Problem 07 — Slotted ALOHA with N Stations</span>
+      <h4>In Slotted ALOHA with 10 stations each transmitting p = 0.1 per slot, find G, S, P(success), P(empty), P(collision).</h4>
+      <div class="given"><span class="g-lbl">Given</span>k = 10 &nbsp;|&nbsp; p = 0.1 &nbsp;|&nbsp; Slotted ALOHA</div>
+      <div class="sol-steps">
+        <div class="sol"><span class="sol-n">1</span><span class="sol-c">Offered load: <code>G = k × p = 10 × 0.1 = 1.0</code></span></div>
+        <div class="sol"><span class="sol-n">2</span><span class="sol-c">Throughput: <code>S = G × e^(−G) = 1.0 × e^(−1) = 0.3679</code></span></div>
+        <div class="sol"><span class="sol-n">3</span><span class="sol-c">P(success) binomial: <code>P_s = k·p·(1−p)^(k−1) = 10 × 0.1 × (0.9)^9</code></span></div>
+        <div class="sol"><span class="sol-n">4</span><span class="sol-c">Compute (0.9)^9: <code>(0.9)^9 = 0.3874</code></span></div>
+        <div class="sol"><span class="sol-n">5</span><span class="sol-c">P(success): <code>10 × 0.1 × 0.3874 = 0.3874</code></span></div>
+        <div class="sol"><span class="sol-n">6</span><span class="sol-c">P(empty): <code>(1−p)^k = (0.9)^10 = 0.3487</code></span></div>
+        <div class="sol"><span class="sol-n">7</span><span class="sol-c">P(collision): <code>1 − 0.3874 − 0.3487 = 0.2639</code></span></div>
+      </div>
+      <div class="ans"><span class="correct">✓</span> G = 1.0 &nbsp;|&nbsp; S = 36.79% &nbsp;|&nbsp; P(success) = 38.74% &nbsp;|&nbsp; P(empty) = 34.87% &nbsp;|&nbsp; P(collision) = 26.39%</div>
+    </div>
+  </div>
+
+  <div class="num-prob" id="p7">
+    <div class="prob-card">
+      <span class="p-num">Problem 08 — Minimum Stations to Achieve Target Throughput</span>
+      <h4>Slotted ALOHA: How many stations k each transmitting p = 0.05 per slot are needed to achieve throughput S ≥ 0.30?</h4>
+      <div class="given"><span class="g-lbl">Given</span>p = 0.05 &nbsp;|&nbsp; Target S ≥ 0.30 &nbsp;|&nbsp; Slotted ALOHA</div>
+      <div class="sol-steps">
+        <div class="sol"><span class="sol-n">1</span><span class="sol-c">G = k × p = k × 0.05. Need <code>S = G·e^(−G) ≥ 0.30</code></span></div>
+        <div class="sol"><span class="sol-n">2</span><span class="sol-c">From S-G curve, <code>G·e^(−G) ≥ 0.30</code> holds for approximately <code>0.475 ≤ G ≤ 1.79</code></span></div>
+        <div class="sol"><span class="sol-n">3</span><span class="sol-c">Minimum G = 0.475 → <code>k_min = G/p = 0.475/0.05 = 9.5 → k = 10</code></span></div>
+        <div class="sol"><span class="sol-n">4</span><span class="sol-c">Verify k=10: <code>G = 10×0.05 = 0.5, S = 0.5×e^(−0.5) = 0.3033 ≥ 0.30 ✓</code></span></div>
+        <div class="sol"><span class="sol-n">5</span><span class="sol-c">Verify k=9: <code>G = 9×0.05 = 0.45, S = 0.45×e^(−0.45) = 0.2869 &lt; 0.30 ✗</code></span></div>
+      </div>
+      <div class="ans"><span class="correct">✓</span> Minimum stations k = <strong>10</strong> (giving G = 0.5, S = 30.33% ≥ 30%)</div>
+    </div>
+  </div>
+
+  <div class="solver">
+    <div class="solver-header">
+      <span class="solver-header-lbl">⚡ Interactive Solver — Enter any parameters, get instant results</span>
+    </div>
+    <div class="solver-body">
+      <div class="sol-grid">
+        <div class="sf">
+          <label>Protocol</label>
+          <select id="sol-proto">
+            <option value="pure">Pure ALOHA</option>
+            <option value="slotted">Slotted ALOHA</option>
+          </select>
+        </div>
+        <div class="sf">
+          <label>Offered Load G</label>
+          <input type="number" id="sol-G" value="0.5" min="0.001" max="10" step="0.01"/>
+        </div>
+        <div class="sf">
+          <label>Stations k</label>
+          <input type="number" id="sol-k" value="5" min="1" max="100" step="1"/>
+        </div>
+        <div class="sf">
+          <label>Tx Probability p</label>
+          <input type="number" id="sol-p" value="0.2" min="0.001" max="1" step="0.001"/>
+        </div>
+        <div class="sf">
+          <label>Bandwidth (kbps)</label>
+          <input type="number" id="sol-bw" value="200" min="1" max="100000" step="1"/>
+        </div>
+        <div class="sf">
+          <label>Frame Size (bits)</label>
+          <input type="number" id="sol-frame" value="1000" min="8" max="100000" step="8"/>
+        </div>
+      </div>
+      <button class="calc-btn" onclick="calcSolver()">Calculate →</button>
+      <div id="sol-out"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ COMPARE ══════════════════ -->
+<section id="compare">
+  <div class="s-head">
+    <span class="s-n">05</span>
+    <div>
+      <div class="s-title">Protocol Comparison</div>
+      <p class="s-desc">Advantages, disadvantages, and real-world use cases for Pure vs. Slotted ALOHA.</p>
+    </div>
+  </div>
+
+  <div class="compare-grid fade-in">
+    <div class="compare-col">
+      <div class="compare-col-header"><span class="pure-dot"></span>Pure ALOHA</div>
+      <div class="compare-item"><span class="compare-icon">✓</span><span class="compare-text">Simple implementation — no clock synchronisation required</span></div>
+      <div class="compare-item"><span class="compare-icon">✓</span><span class="compare-text">Works well in distributed, uncoordinated environments</span></div>
+      <div class="compare-item"><span class="compare-icon">✓</span><span class="compare-text">Immediate transmission — no slot boundary wait</span></div>
+      <div class="compare-item"><span class="compare-icon con">✗</span><span class="compare-text">Maximum throughput only 18.4% — large wasted capacity</span></div>
+      <div class="compare-item"><span class="compare-icon con">✗</span><span class="compare-text">Vulnerable period 2T<sub>p</sub> — higher collision probability</span></div>
+      <div class="compare-item"><span class="compare-icon con">✗</span><span class="compare-text">Unstable under high load — collision cascade possible</span></div>
+      <div class="compare-item"><span class="compare-icon con">✗</span><span class="compare-text">Partial collisions waste channel time for all senders</span></div>
+    </div>
+    <div class="compare-col">
+      <div class="compare-col-header"><span class="slot-dot"></span>Slotted ALOHA</div>
+      <div class="compare-item"><span class="compare-icon">✓</span><span class="compare-text">Double the max throughput — 36.8% efficiency</span></div>
+      <div class="compare-item"><span class="compare-icon">✓</span><span class="compare-text">No partial collisions — cleaner failure modes</span></div>
+      <div class="compare-item"><span class="compare-icon">✓</span><span class="compare-text">Better stability at moderate-to-high offered loads</span></div>
+      <div class="compare-item"><span class="compare-icon">✓</span><span class="compare-text">Foundation for modern TDMA and LTE random-access</span></div>
+      <div class="compare-item"><span class="compare-icon con">✗</span><span class="compare-text">Requires precise global clock synchronisation</span></div>
+      <div class="compare-item"><span class="compare-icon con">✗</span><span class="compare-text">Idle time introduced if frame arrives mid-slot</span></div>
+      <div class="compare-item"><span class="compare-icon con">✗</span><span class="compare-text">Synchronisation overhead and failure point</span></div>
+    </div>
+  </div>
+
+  <span class="sub-label">Probability Distribution at Peak G</span>
+  <div class="prob-table-wrap fade-in">
+    <table>
+      <thead>
+        <tr><th>Event</th><th>Pure ALOHA (G=0.5, peak)</th><th>Slotted ALOHA (G=1.0, peak)</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>P(success)</td>
+          <td><div class="prob-cell-bar"><div class="prob-bar pure" style="width:37px"></div>0.1839</div></td>
+          <td><div class="prob-cell-bar"><div class="prob-bar" style="width:74px"></div>0.3679</div></td>
+        </tr>
+        <tr>
+          <td>P(empty)</td>
+          <td><div class="prob-cell-bar"><div class="prob-bar pure" style="width:74px"></div>0.3679</div></td>
+          <td><div class="prob-cell-bar"><div class="prob-bar" style="width:74px"></div>0.3679</div></td>
+        </tr>
+        <tr>
+          <td>P(collision)</td>
+          <td><div class="prob-cell-bar"><div class="prob-bar pure" style="width:90px"></div>0.4482</div></td>
+          <td><div class="prob-cell-bar"><div class="prob-bar" style="width:53px"></div>0.2642</div></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout success">
+    <strong>Real-World Applications:</strong> Pure ALOHA → early satellite networks, RFID tag reading (ISO 18000-6B).
+    Slotted ALOHA → GSM Random Access Channel (RACH), LTE PRACH, Bluetooth Low Energy advertising, IEEE 802.11 DCF (evolved form), satellite VSAT networks.
+  </div>
+</section>
+
+<!-- ══════════════════ VIDEO ══════════════════ -->
+<section id="video">
+  <div class="s-head">
+    <span class="s-n">06</span>
+    <div>
+      <div class="s-title">Video Reference</div>
+      <p class="s-desc">Neso Academy — step-by-step explanation of Pure and Slotted ALOHA with worked numerical examples.</p>
+    </div>
+  </div>
+  <div class="vid-wrap">
+    <iframe src="https://www.youtube.com/embed/KCCQBguOvEA"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen title="Pure and Slotted ALOHA — Neso Academy"></iframe>
+  </div>
+</section>
+
+<!-- ══════════════════ REFERENCES ══════════════════ -->
+<section id="references">
+  <div class="s-head">
+    <span class="s-n">07</span>
+    <div>
+      <div class="s-title">References</div>
+      <p class="s-desc">Textbooks, the original 1970 paper, virtual labs, and educational resources for deeper study.</p>
+    </div>
+  </div>
+  <div class="ref-grid fade-in">
+    <div class="ref-card">
+      <div class="r-type">Prescribed Textbook</div>
+      <h4>Data Communications and Networking</h4>
+      <p>Behrouz A. Forouzan, 5th Ed. Chapter 12 — Section 12.2 covers ALOHA protocols in detail.</p>
+      <a class="ref-link" href="https://www.mheducation.com/highered/product/data-communications-networking-forouzan/M9780073376226.html" target="_blank" rel="noopener">→ Publisher Page</a>
+    </div>
+    <div class="ref-card">
+      <div class="r-type">Prescribed Textbook</div>
+      <h4>Computer Networks</h4>
+      <p>Andrew S. Tanenbaum & David Wetherall, 5th Ed. Chapter 4.2.1 — The ALOHA Protocol.</p>
+      <a class="ref-link" href="https://www.pearson.com/en-us/subject-catalog/p/computer-networks/P200000003523" target="_blank" rel="noopener">→ Publisher Page</a>
+    </div>
+    <div class="ref-card">
+      <div class="r-type">Video Resource</div>
+      <h4>Neso Academy — ALOHA Protocols</h4>
+      <p>Video series covering Pure ALOHA, Slotted ALOHA, throughput derivation, and solved numericals.</p>
+      <a class="ref-link" href="https://www.youtube.com/watch?v=KCCQBguOvEA" target="_blank" rel="noopener">→ Watch on YouTube</a>
+    </div>
+    <div class="ref-card">
+      <div class="r-type">Educational Website</div>
+      <h4>GeeksforGeeks — ALOHA</h4>
+      <p>Article covering definitions, types, formulae, advantages, disadvantages, and applications.</p>
+      <a class="ref-link" href="https://www.geeksforgeeks.org/aloha-in-computer-network/" target="_blank" rel="noopener">→ Read Article</a>
+    </div>
+    <div class="ref-card">
+      <div class="r-type">Virtual Lab</div>
+      <h4>Virtual Labs — IIT Kharagpur</h4>
+      <p>Interactive simulation platform for networking experiments including ALOHA and other MAC protocols.</p>
+      <a class="ref-link" href="https://cse18-iiith.vlabs.ac.in/" target="_blank" rel="noopener">→ Visit Lab</a>
+    </div>
+    <div class="ref-card">
+      <div class="r-type">Original Research Paper</div>
+      <h4>The ALOHA System — Abramson (1970)</h4>
+      <p>Original AFIPS paper introducing the ALOHA protocol for the ALOHAnet at University of Hawaii.</p>
+      <a class="ref-link" href="https://dl.acm.org/doi/10.1145/1478873.1478893" target="_blank" rel="noopener">→ ACM Digital Library</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════ FOOTER ══════════════════ -->
+<footer>
+  <span>ALOHA Protocol — Interactive Study Reference · <span>BCSE308L Computer Networks</span> · VIT Chennai</span>
+  <span style="color:var(--dim)">Built with HTML · CSS · Canvas</span>
+</footer>
+
+<!-- ══════════════════ HELP MODAL ══════════════════ -->
+<div class="modal-bg" id="helpModal">
+  <div class="modal">
+    <button class="m-close" onclick="closeHelp()">✕ close</button>
+    <h3>How to Use</h3>
+    <ul>
+      <li><strong>Theme</strong> — "Light/Dark" in the nav switches the colour scheme. Charts redraw automatically.</li>
+      <li><strong>Throughput Chart</strong> — S vs G curve with peak markers and a full numerical table below it.</li>
+      <li><strong>Simulation</strong> — Pick protocol, set stations / load / slots, click Run. Red = collision, green = success. Log shows per-slot events.</li>
+      <li><strong>Animated Replay</strong> — After running a simulation, use Play/Pause/Reset to step through slot by slot. Click the progress bar to seek.</li>
+      <li><strong>Numericals</strong> — Tab through 8 fully-worked problems. Use the Interactive Solver for custom parameter calculations.</li>
+      <li><strong>Compare</strong> — Side-by-side pros/cons and probability breakdown of both protocols.</li>
+      <li><strong>Download</strong> — Saves this complete single-file HTML to your device — works fully offline.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ══════════════════ JAVASCRIPT ══════════════════ -->
+<script>
+'use strict';
+
+/* ─── THEME ─── */
+function toggleTheme() {
+  const isDark = document.documentElement.dataset.theme === 'dark';
+  document.documentElement.dataset.theme = isDark ? 'light' : 'dark';
+  document.getElementById('themeBtn').textContent = isDark ? '☾ Dark' : '☀ Light';
+  drawChart();
+  if (simData) { drawSimCanvas(simData); drawTimelineCanvas(simData); drawAnimFrame(animCurrentSlot); }
+}
+
+/* ─── NAV ─── */
+function navGo(id, el) {
+  document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('on'));
+  if (el && el.classList) el.classList.add('on');
+  const target = document.getElementById(id);
+  if (target) target.scrollIntoView({ behavior: 'smooth' });
+}
+
+/* ─── HELP MODAL ─── */
+function openHelp() { document.getElementById('helpModal').classList.add('open'); }
+function closeHelp() { document.getElementById('helpModal').classList.remove('open'); }
+document.getElementById('helpModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeHelp(); });
+
+/* ─── DOWNLOAD ─── */
+function dlPage() {
+  const blob = new Blob([document.documentElement.outerHTML], { type: 'text/html' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'alohanet-interactive.html'; a.click();
+}
+
+/* ─── COLOR HELPER ─── */
+const C = {
+  bg2:  () => getComputedStyle(document.documentElement).getPropertyValue('--bg2').trim(),
+  bg3:  () => getComputedStyle(document.documentElement).getPropertyValue('--bg3').trim(),
+  border:() => getComputedStyle(document.documentElement).getPropertyValue('--border').trim(),
+  border2:()=> getComputedStyle(document.documentElement).getPropertyValue('--border2').trim(),
+  amber:() => getComputedStyle(document.documentElement).getPropertyValue('--amber').trim(),
+  blue: () => getComputedStyle(document.documentElement).getPropertyValue('--blue').trim(),
+  green:() => getComputedStyle(document.documentElement).getPropertyValue('--green').trim(),
+  red:  () => getComputedStyle(document.documentElement).getPropertyValue('--red').trim(),
+  dim:  () => getComputedStyle(document.documentElement).getPropertyValue('--dim').trim(),
+  text2:() => getComputedStyle(document.documentElement).getPropertyValue('--text2').trim(),
+  text: () => getComputedStyle(document.documentElement).getPropertyValue('--text').trim(),
+};
+
+/* ─── THROUGHPUT CHART ─── */
+function drawChart() {
+  const cv = document.getElementById('tp-canvas');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  cv.width  = cv.parentElement.offsetWidth;
+  cv.height = 360;
+  const W = cv.width, H = cv.height;
+  const PAD = { l: 54, r: 24, t: 24, b: 44 };
+  const cw = W - PAD.l - PAD.r, ch = H - PAD.t - PAD.b;
+  const Gmax = 3.5, Smax = 0.45;
+  const toX = g => PAD.l + (g / Gmax) * cw;
+  const toY = s => PAD.t + (1 - s / Smax) * ch;
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = C.bg2(); ctx.fillRect(0, 0, W, H);
+
+  // Grid lines
+  [0.1,0.2,0.3,0.4].forEach(s => {
+    ctx.strokeStyle = C.border(); ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(PAD.l, toY(s)); ctx.lineTo(PAD.l + cw, toY(s)); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = C.dim(); ctx.font = '10px Space Mono, monospace'; ctx.textAlign = 'right';
+    ctx.fillText(s.toFixed(1), PAD.l - 8, toY(s) + 4);
+  });
+  [0.5,1,1.5,2,2.5,3,3.5].forEach(g => {
+    ctx.strokeStyle = C.border(); ctx.lineWidth = 1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(toX(g), PAD.t); ctx.lineTo(toX(g), PAD.t + ch); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = C.dim(); ctx.font = '10px Space Mono, monospace'; ctx.textAlign = 'center';
+    ctx.fillText(g.toFixed(1), toX(g), H - 12);
+  });
+
+  // Axes
+  ctx.strokeStyle = C.border2(); ctx.lineWidth = 1.5; ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(PAD.l, PAD.t); ctx.lineTo(PAD.l, PAD.t + ch); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(PAD.l, PAD.t + ch); ctx.lineTo(PAD.l + cw, PAD.t + ch); ctx.stroke();
+
+  // Axis labels
+  ctx.fillStyle = C.dim(); ctx.font = '11px Space Mono, monospace'; ctx.textAlign = 'center';
+  ctx.fillText('Offered Load  G', PAD.l + cw / 2, H - 2);
+  ctx.save(); ctx.translate(14, H / 2); ctx.rotate(-Math.PI / 2);
+  ctx.fillText('Throughput  S', 0, 0); ctx.restore();
+
+  const Gs = Array.from({ length: 701 }, (_, i) => i / 700 * Gmax);
+
+  // Pure ALOHA — dashed amber
+  ctx.setLineDash([7, 5]); ctx.lineWidth = 2.5; ctx.strokeStyle = C.amber();
+  ctx.beginPath();
+  Gs.forEach((G, i) => { const S = G * Math.exp(-2 * G); i===0 ? ctx.moveTo(toX(G),toY(S)) : ctx.lineTo(toX(G),toY(S)); });
+  ctx.stroke(); ctx.setLineDash([]);
+
+  // Slotted ALOHA — solid blue
+  ctx.lineWidth = 2.5; ctx.strokeStyle = C.blue();
+  ctx.beginPath();
+  Gs.forEach((G, i) => { const S = G * Math.exp(-G); i===0 ? ctx.moveTo(toX(G),toY(S)) : ctx.lineTo(toX(G),toY(S)); });
+  ctx.stroke();
+
+  // Peaks
+  const peaks = [
+    { G: 0.5, S: 0.5*Math.exp(-1), label: 'Pure: G=0.5, S=0.184', color: C.amber() },
+    { G: 1.0, S: Math.exp(-1),     label: 'Slotted: G=1.0, S=0.368', color: C.blue() },
+  ];
+  peaks.forEach(pt => {
+    const px = toX(pt.G), py = toY(pt.S);
+    ctx.strokeStyle = C.dim(); ctx.lineWidth = 0.8; ctx.setLineDash([3,4]);
+    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, PAD.t + ch); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath(); ctx.arc(px, py, 6, 0, Math.PI*2);
+    ctx.fillStyle = pt.color; ctx.fill();
+    ctx.strokeStyle = C.bg2(); ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = C.text2(); ctx.font = '10px Space Mono, monospace'; ctx.textAlign = 'left';
+    ctx.fillText(pt.label, px + 10, py - 10);
+  });
+}
+
+/* ─── THROUGHPUT TABLE ─── */
+function buildThroughputTable() {
+  const tbody = document.getElementById('throughput-tbody');
+  if (!tbody) return;
+  const Gs = [0.1, 0.25, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 1.0, 1.2, 1.5, 2.0];
+  tbody.innerHTML = Gs.map(G => {
+    const Sp = G * Math.exp(-2*G), Ss = G * Math.exp(-G);
+    const ratio = Sp > 0.0001 ? (Ss/Sp).toFixed(2) : '∞';
+    const mark = g => (g===0.5||g===1.0) ? ' ★' : '';
+    return `<tr>
+      <td class="td-highlight">${G.toFixed(2)}${mark(G)}</td>
+      <td class="td-pure">${Sp.toFixed(4)}</td>
+      <td class="td-pure">${(Sp*100).toFixed(2)}%</td>
+      <td class="td-slot">${Ss.toFixed(4)}</td>
+      <td class="td-slot">${(Ss*100).toFixed(2)}%</td>
+      <td>${ratio}×</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ─── SIMULATION ─── */
+let simProto = 'pure';
+let simData  = null;
+
+function setProto(t) {
+  simProto = t;
+  document.getElementById('b-pure').classList.toggle('on', t==='pure');
+  document.getElementById('b-slot').classList.toggle('on', t==='slotted');
+}
+
+function updVals() {
+  document.getElementById('v-sta').textContent = document.getElementById('s-sta').value;
+  document.getElementById('v-g').textContent   = (document.getElementById('s-g').value/10).toFixed(1);
+  document.getElementById('v-sl').textContent  = document.getElementById('s-sl').value;
+}
+
+function runSim() {
+  const btn = document.getElementById('runBtn');
+  btn.classList.add('running'); btn.textContent = '⏳ Simulating…';
+  setTimeout(() => {
+    const nSta  = parseInt(document.getElementById('s-sta').value);
+    const G     = parseInt(document.getElementById('s-g').value) / 10;
+    const nSlots= parseInt(document.getElementById('s-sl').value);
+    const proto = simProto;
+    const p     = Math.min(G / nSta, 1.0);
+    let slots = [], txList = [];
+
+    if (proto === 'slotted') {
+      for (let s = 0; s < nSlots; s++) {
+        const txStations = [];
+        for (let st = 0; st < nSta; st++) { if (Math.random() < p) txStations.push(st); }
+        slots.push({ txStations, type: txStations.length===0?'empty':txStations.length===1?'success':'collision' });
+      }
+    } else {
+      for (let st = 0; st < nSta; st++) {
+        for (let s = 0; s < nSlots; s++) {
+          if (Math.random() < p) {
+            const offset = Math.random() * 0.9;
+            txList.push({ station: st, start: s+offset, end: s+offset+1.0, collision: false });
+          }
+        }
+      }
+      txList.forEach((f1,i) => txList.forEach((f2,j) => { if (i!==j && Math.abs(f1.start-f2.start)<1.0) f1.collision=true; }));
+      for (let s = 0; s < nSlots; s++) {
+        const inSlot = txList.filter(f => Math.floor(f.start)===s);
+        const type = inSlot.length===0?'empty':inSlot.some(f=>f.collision)?'collision':'success';
+        slots.push({ txStations: inSlot.map(f=>f.station), type, frames: inSlot });
+      }
+    }
+
+    simData = { nSta, nSlots, G, p, proto, slots, txList };
+    updateMetrics(slots, nSlots);
+    buildSimLog(slots);
+    drawSimCanvas(simData);
+    drawTimelineCanvas(simData);
+    animReset();
+    btn.classList.remove('running'); btn.innerHTML = '▶&nbsp; Run Simulation';
+  }, 50);
+}
+
+function updateMetrics(slots, nSlots) {
+  const sent = slots.reduce((a,s) => a+s.txStations.length, 0);
+  const succ = slots.filter(s=>s.type==='success').length;
+  const coll = slots.filter(s=>s.type==='collision').length;
+  document.getElementById('m-sent').textContent = sent;
+  document.getElementById('m-succ').textContent = succ;
+  document.getElementById('m-coll').textContent = coll;
+  document.getElementById('m-tp').textContent   = (succ/nSlots).toFixed(3);
+}
+
+function buildSimLog(slots) {
+  const log = document.getElementById('sim-log');
+  log.innerHTML = '';
+  slots.slice(0, 60).forEach((s, i) => {
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+    let cls='log-e', msg='Empty';
+    if (s.type==='success') { cls='log-s'; msg=`Success (S${s.txStations[0]})`; }
+    else if (s.type==='collision') { cls='log-c'; msg=`Collision [${s.txStations.map(x=>'S'+x).join(', ')}]`; }
+    entry.innerHTML = `<span class="log-t">sl.${String(i).padStart(2,'0')}</span><span class="${cls}">${msg}</span>`;
+    log.appendChild(entry);
+  });
+}
+
+function drawSimCanvas(data) {
+  const cv = document.getElementById('sim-canvas'); if (!cv) return;
+  const ctx = cv.getContext('2d');
+  cv.width = cv.parentElement.offsetWidth; cv.height = 180;
+  const W=cv.width, H=cv.height, PAD={l:36,r:16,t:24,b:24};
+  const cw=W-PAD.l-PAD.r, ch=H-PAD.t-PAD.b;
+  const { nSlots, slots, proto, txList } = data;
+  const slotW = cw/nSlots;
+
+  ctx.fillStyle=C.bg3(); ctx.fillRect(0,0,W,H);
+  for (let i=0; i<nSlots; i++) {
+    if (i%2===0) { ctx.fillStyle=C.bg2()+'88'; ctx.fillRect(PAD.l+i*slotW,PAD.t,slotW,ch); }
+  }
+  // Axis
+  ctx.strokeStyle=C.border2(); ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(PAD.l,PAD.t+ch); ctx.lineTo(PAD.l+cw,PAD.t+ch); ctx.stroke();
+  ctx.fillStyle=C.dim(); ctx.font='10px Space Mono,monospace'; ctx.textAlign='center';
+  ctx.fillText('Time Slots', PAD.l+cw/2, H-4);
+
+  if (proto==='pure') {
+    txList.forEach(f => {
+      const x=PAD.l+(f.start/nSlots)*cw, w=slotW;
+      const col=f.collision?C.red():C.green();
+      ctx.fillStyle=col+'44'; ctx.fillRect(x,PAD.t+4,w,ch-8);
+      ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.strokeRect(x,PAD.t+4,w,ch-8);
+    });
+  } else {
+    slots.forEach((s,i) => {
+      if (s.type==='empty') return;
+      const x=PAD.l+i*slotW;
+      const col=s.type==='collision'?C.red():C.green();
+      ctx.fillStyle=col+'44'; ctx.fillRect(x+1,PAD.t+4,slotW-2,ch-8);
+      ctx.strokeStyle=col; ctx.lineWidth=1.5; ctx.strokeRect(x+1,PAD.t+4,slotW-2,ch-8);
+    });
+  }
+}
+
+function drawTimelineCanvas(data) {
+  const cv = document.getElementById('tl-canvas'); if (!cv) return;
+  const ctx = cv.getContext('2d');
+  cv.width = cv.parentElement.offsetWidth;
+  const rowH=22, H=(data.nSta*rowH)+40; cv.height=H;
+  const { nSlots, proto, txList, slots } = data;
+  const PAD={l:36,r:16,t:10,b:20}, cw=cv.width-PAD.l-PAD.r, slotW=cw/nSlots;
+
+  ctx.fillStyle=C.bg3(); ctx.fillRect(0,0,cv.width,H);
+  for (let st=0; st<data.nSta; st++) {
+    const y=PAD.t+st*rowH;
+    ctx.fillStyle=C.dim(); ctx.font='9px Space Mono,monospace'; ctx.textAlign='right';
+    ctx.fillText('S'+st, PAD.l-4, y+14);
+    ctx.strokeStyle=C.border(); ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.moveTo(PAD.l,y+rowH); ctx.lineTo(cv.width-PAD.r,y+rowH); ctx.stroke();
+  }
+  if (proto==='pure') {
+    txList.forEach(f => {
+      const x=PAD.l+(f.start/nSlots)*cw, y=PAD.t+f.station*rowH;
+      const col=f.collision?C.red():C.green();
+      ctx.fillStyle=col+'77'; ctx.fillRect(x,y+3,slotW,rowH-6);
+    });
+  } else {
+    slots.forEach((s,i) => {
+      s.txStations.forEach(st => {
+        const x=PAD.l+i*slotW, y=PAD.t+st*rowH;
+        const col=s.type==='collision'?C.red():C.green();
+        ctx.fillStyle=col+'77'; ctx.fillRect(x+1,y+3,slotW-2,rowH-6);
+      });
+    });
+  }
+}
+
+/* ─── ANIMATION ─── */
+let animCurrentSlot=0, animTimer=null, animSpeed=600;
+
+function animReset() {
+  clearTimeout(animTimer); animTimer=null; animCurrentSlot=0;
+  document.getElementById('anim-play-btn').classList.remove('active');
+  document.getElementById('anim-progress').style.width='0';
+  document.getElementById('anim-slot-label').textContent='Slot: 0';
+  if (simData) drawAnimFrame(0);
+}
+
+function animPlay() {
+  if (!simData||animTimer) return;
+  document.getElementById('anim-play-btn').classList.add('active');
+  const step = () => {
+    drawAnimFrame(animCurrentSlot);
+    if (animCurrentSlot < simData.nSlots-1) { animCurrentSlot++; animTimer=setTimeout(step,animSpeed); }
+    else animPause();
+  };
+  step();
+}
+
+function animPause() {
+  clearTimeout(animTimer); animTimer=null;
+  document.getElementById('anim-play-btn').classList.remove('active');
+}
+
+function drawAnimFrame(slotIdx) {
+  const cv=document.getElementById('anim-canvas'); if (!cv||!simData) return;
+  const ctx=cv.getContext('2d');
+  cv.width=cv.parentElement.offsetWidth; cv.height=120;
+  const W=cv.width, H=cv.height, { nSlots, slots } = simData;
+  const PAD={l:36,r:16,t:16,b:20};
+  const slotW=(W-PAD.l-PAD.r)/nSlots;
+  ctx.fillStyle=C.bg3(); ctx.fillRect(0,0,W,H);
+
+  document.getElementById('anim-progress').style.width=((slotIdx+1)/nSlots*100)+'%';
+  document.getElementById('anim-slot-label').textContent=`Slot: ${slotIdx}`;
+
+  slots.forEach((s,i) => {
+    if (s.type==='empty') return;
+    const x=PAD.l+i*slotW;
+    let col = i===slotIdx ? (s.type==='collision'?C.red():C.green()) : C.dim()+'66';
+    let alpha = i===slotIdx ? '99' : '22';
+    ctx.fillStyle=col+(i===slotIdx?'':'22');
+    if (i<=slotIdx) {
+      const base = s.type==='collision'?C.red():C.green();
+      ctx.fillStyle = i===slotIdx ? base+'cc' : base+'22';
+      ctx.fillRect(x+1, PAD.t+4, slotW-2, H-PAD.t-PAD.b-4);
+    }
+  });
+
+  if (slots[slotIdx] && slots[slotIdx].type!=='empty') {
+    const cur=slots[slotIdx];
+    const x=PAD.l+slotIdx*slotW;
+    const col=cur.type==='collision'?C.red():C.green();
+    ctx.fillStyle=col+'ee'; ctx.fillRect(x+1,PAD.t+2,slotW-2,H-PAD.t-PAD.b);
+    ctx.fillStyle='#fff'; ctx.font='bold 10px Space Mono,monospace'; ctx.textAlign='center';
+    ctx.fillText(cur.type==='collision'?'COL':'OK', x+slotW/2, PAD.t+(H-PAD.t-PAD.b)/2+4);
+  }
+}
+
+function setAnimSpeed(ms, btn) {
+  animSpeed=ms;
+  document.querySelectorAll('.anim-spd-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+function animSeek(e, el) {
+  if (!simData) return;
+  const rect=el.getBoundingClientRect();
+  animCurrentSlot=Math.floor(((e.clientX-rect.left)/rect.width)*simData.nSlots);
+  drawAnimFrame(animCurrentSlot);
+}
+
+/* ─── NUMERICALS ─── */
+function showP(i) {
+  document.querySelectorAll('.num-tab').forEach((b,idx) => b.classList.toggle('on',idx===i));
+  document.querySelectorAll('.num-prob').forEach((p,idx) => p.classList.toggle('on',idx===i));
+}
+
+function calcSolver() {
+  const proto  = document.getElementById('sol-proto').value;
+  const G      = parseFloat(document.getElementById('sol-G').value) || 0.5;
+  const k      = parseInt(document.getElementById('sol-k').value) || 5;
+  const p      = parseFloat(document.getElementById('sol-p').value) || 0.2;
+  const bw     = parseFloat(document.getElementById('sol-bw').value) || 200;
+  const fsize  = parseFloat(document.getElementById('sol-frame').value) || 1000;
+  const S      = proto==='pure' ? G*Math.exp(-2*G) : G*Math.exp(-G);
+  const Pempty = proto==='pure' ? Math.exp(-2*G) : Math.exp(-G);
+  const Pcoll  = 1 - Pempty - S;
+  const pSuccB = k * p * Math.pow(1-p, k-1);
+  const Tp     = fsize/(bw*1000);
+  const effKbps= S * bw;
+  const Gkp    = k * p;
+  const out = document.getElementById('sol-out');
+  out.style.display='block';
+  out.innerHTML = `
+    <span class="sol-out-title">Results for ${proto==='pure'?'Pure':'Slotted'} ALOHA — G = ${G}</span>
+    <div class="sr"><span class="sk">Throughput S</span><span class="sv2">${(S*100).toFixed(3)}% &nbsp;(${S.toFixed(5)})</span></div>
+    <div class="sr"><span class="sk">P(empty slot)</span><span class="sv2">${(Pempty*100).toFixed(3)}%</span></div>
+    <div class="sr"><span class="sk">P(collision)</span><span class="sv2">${(Math.max(0,Pcoll)*100).toFixed(3)}%</span></div>
+    <div class="sr"><span class="sk">Effective Rate</span><span class="sv2">${effKbps.toFixed(3)} kbps</span></div>
+    <div class="sr"><span class="sk">P(success) Binomial (k=${k}, p=${p})</span><span class="sv2">${(pSuccBinom*100).toFixed(3)}%</span></div>
+    <div class="sr"><span class="sk">G from k·p</span><span class="sv2">${Gkp.toFixed(3)}</span></div>
+    <div class="sr"><span class="sk">Frame Time T<sub>p</sub></span><span class="sv2">${(Tp*1000).toFixed(3)} ms</span></div>
+  `.replace('pSuccBinom', pSuccB.toFixed(5));
+  // fix template literal issue
+  out.innerHTML = `
+    <span class="sol-out-title">Results for ${proto==='pure'?'Pure':'Slotted'} ALOHA — G = ${G}</span>
+    <div class="sr"><span class="sk">Throughput S</span><span class="sv2">${(S*100).toFixed(3)}% &nbsp;(${S.toFixed(5)})</span></div>
+    <div class="sr"><span class="sk">P(empty slot)</span><span class="sv2">${(Pempty*100).toFixed(3)}%</span></div>
+    <div class="sr"><span class="sk">P(collision)</span><span class="sv2">${(Math.max(0,Pcoll)*100).toFixed(3)}%</span></div>
+    <div class="sr"><span class="sk">Effective Rate</span><span class="sv2">${effKbps.toFixed(3)} kbps</span></div>
+    <div class="sr"><span class="sk">P(success) Binomial (k=${k}, p=${p})</span><span class="sv2">${(pSuccB*100).toFixed(3)}%</span></div>
+    <div class="sr"><span class="sk">G from k·p = ${k}×${p}</span><span class="sv2">${Gkp.toFixed(3)}</span></div>
+    <div class="sr"><span class="sk">Frame Time T<sub>p</sub></span><span class="sv2">${(Tp*1000).toFixed(3)} ms</span></div>
+  `;
+}
+
+/* ─── SCROLL FADE ─── */
+function initScrollFade() {
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.08 });
+  document.querySelectorAll('.fade-in').forEach(el => obs.observe(el));
+}
+
+/* ─── INIT ─── */
+document.addEventListener('DOMContentLoaded', () => {
+  updVals();
+  drawChart();
+  buildThroughputTable();
+  initScrollFade();
+  runSim();
+  window.addEventListener('resize', () => {
+    drawChart();
+    if (simData) { drawSimCanvas(simData); drawTimelineCanvas(simData); }
+  });
+});
+</script>
+</body>
+</html>
