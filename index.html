@@ -1742,6 +1742,22 @@ function calcSolver() {
       P(coll) = <strong>${(Pcoll*100).toFixed(3)}%</strong> &nbsp;|&nbsp;
       Eff = <strong>${effKbps.toFixed(3)} kbps</strong>
     </div>
+    // 🔽 ADD THIS at the end of out.innerHTML template
+<div style="
+  margin-top:10px;
+  padding:10px 14px;
+  background:rgba(255,255,255,0.03);
+  border:1px solid var(--border2);
+  border-left:3px solid var(--amber);
+  border-radius:6px;
+  font-size:12px;
+  color:var(--text2);
+  line-height:1.6">
+  <strong style="color:var(--amber)">Note:</strong>
+  Throughput <code>S = G·e^(−G)</code> uses the <em>Poisson (infinite users)</em> model,
+  while <code>P<sub>s</sub> = k·p·(1−p)^(k−1)</code> uses a <em>finite-station (binomial)</em> model.
+  Values may differ slightly when <code>k</code> is small.
+</div>
   `;
 }
 
