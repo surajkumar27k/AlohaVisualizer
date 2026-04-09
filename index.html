@@ -1447,7 +1447,7 @@ function runSim() {
           }
         }
       }
-      txList.forEach((f1,i) => txList.forEach((f2,j) => { if (i!==j && Math.abs(f1.start-f2.start)<1.0) f1.collision=true; }));
+      txList.forEach((f1,i) => txList.forEach((f2,j) => { if (i!==j && (!(f1.end <= f2.start || f2.end <= f1.start))) f1.collision=true; }));
       for (let s = 0; s < nSlots; s++) {
         const inSlot = txList.filter(f => Math.floor(f.start)===s);
         const type = inSlot.length===0?'empty':inSlot.some(f=>f.collision)?'collision':'success';
