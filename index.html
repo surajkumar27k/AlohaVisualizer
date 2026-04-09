@@ -1177,7 +1177,7 @@ footer span { color: var(--text2); }
     <span class="s-n">06</span>
     <div>
       <div class="s-title">Video Reference</div>
-      <p class="s-desc">Neso Academy — step-by-step explanation of Pure and Slotted ALOHA with worked numerical examples.</p>
+      <p class="s-desc"></p>
     </div>
   </div>
   <div class="vid-wrap">
@@ -1643,39 +1643,105 @@ function showP(i) {
 function calcSolver() {
   const proto  = document.getElementById('sol-proto').value;
   const G      = parseFloat(document.getElementById('sol-G').value) || 0.5;
-  const k      = parseInt(document.getElementById('sol-k').value) || 5;
+  const k      = parseInt(document.getElementById('sol-k').value)   || 5;
   const p      = parseFloat(document.getElementById('sol-p').value) || 0.2;
-  const bw     = parseFloat(document.getElementById('sol-bw').value) || 200;
+  const bw     = parseFloat(document.getElementById('sol-bw').value)    || 200;
   const fsize  = parseFloat(document.getElementById('sol-frame').value) || 1000;
-  const S      = proto==='pure' ? G*Math.exp(-2*G) : G*Math.exp(-G);
-  const Pempty = proto==='pure' ? Math.exp(-2*G) : Math.exp(-G);
-  const Pcoll  = 1 - Pempty - S;
-  const pSuccB = k * p * Math.pow(1-p, k-1);
-  const Tp     = fsize/(bw*1000);
-  const effKbps= S * bw;
+
+  // ── Core calculations ──
+  const isPure = proto === 'pure';
+  const S      = isPure ? G * Math.exp(-2*G) : G * Math.exp(-G);
+  const Pempty = isPure ? Math.exp(-2*G)     : Math.exp(-G);
+  const Pcoll  = Math.max(0, 1 - Pempty - S);
+  const pSuccB = k * p * Math.pow(1 - p, k - 1);
   const Gkp    = k * p;
+  const Tp     = fsize / (bw * 1000);           // seconds
+  const effKbps = S * bw;
+
+  // ── Build step-by-step HTML ──
+  const label  = isPure ? 'Pure' : 'Slotted';
+  const formula= isPure ? 'G · e^(−2G)' : 'G · e^(−G)';
+  const expArg = isPure ? `−2 × ${G} = ${(-2*G).toFixed(4)}` : `−${G}`;
+  const expVal = isPure ? Math.exp(-2*G) : Math.exp(-G);
+
+  const steps = [
+    {
+      n: 1,
+      desc: `<strong>Throughput S</strong> — Apply ${label} ALOHA formula`,
+      math: `S = ${formula} = ${G} × e^(${isPure ? '−2×'+G : '−'+G})<br>
+             = ${G} × ${expVal.toFixed(5)}<br>
+             <strong>= ${S.toFixed(5)} &nbsp;(${(S*100).toFixed(3)}%)</strong>`
+    },
+    {
+      n: 2,
+      desc: `<strong>P(empty ${isPure?'period':'slot'})</strong> — No station transmits`,
+      math: `P(empty) = e^(${isPure?'−2G':'−G'}) = e^(${isPure?'−2×'+G:'−'+G})<br>
+             <strong>= ${Pempty.toFixed(5)} &nbsp;(${(Pempty*100).toFixed(3)}%)</strong>`
+    },
+    {
+      n: 3,
+      desc: `<strong>P(collision)</strong> — At least two transmit simultaneously`,
+      math: `P(coll) = 1 − P(empty) − P(success)<br>
+             = 1 − ${Pempty.toFixed(5)} − ${S.toFixed(5)}<br>
+             <strong>= ${Pcoll.toFixed(5)} &nbsp;(${(Pcoll*100).toFixed(3)}%)</strong>`
+    },
+    {
+      n: 4,
+      desc: `<strong>P(success) Binomial</strong> — Exactly 1 of ${k} stations transmits`,
+      math: `P_s = k · p · (1−p)^(k−1) = ${k} × ${p} × (${1-p})^${k-1}<br>
+             = ${k} × ${p} × ${Math.pow(1-p,k-1).toFixed(6)}<br>
+             <strong>= ${pSuccB.toFixed(5)} &nbsp;(${(pSuccB*100).toFixed(3)}%)</strong>`
+    },
+    {
+      n: 5,
+      desc: `<strong>Offered load from k·p</strong>`,
+      math: `G_kp = k × p = ${k} × ${p} = <strong>${Gkp.toFixed(4)}</strong>
+             ${Math.abs(Gkp - G) > 0.01 ? `<span style="color:var(--amber)"> ⚠ differs from input G=${G}</span>` : ' ✓ consistent with input G'}`
+    },
+    {
+      n: 6,
+      desc: `<strong>Frame transmission time T<sub>p</sub></strong>`,
+      math: `T_p = frame size / bandwidth = ${fsize} bits / ${bw*1000} bps<br>
+             <strong>= ${(Tp*1000).toFixed(4)} ms</strong>`
+    },
+    {
+      n: 7,
+      desc: `<strong>Effective throughput in kbps</strong>`,
+      math: `Eff = S × BW = ${S.toFixed(5)} × ${bw} kbps<br>
+             <strong>= ${effKbps.toFixed(4)} kbps</strong> &nbsp;(${(S*100).toFixed(2)}% of channel capacity)`
+    }
+  ];
+
   const out = document.getElementById('sol-out');
-  out.style.display='block';
+  out.style.display = 'block';
   out.innerHTML = `
-    <span class="sol-out-title">Results for ${proto==='pure'?'Pure':'Slotted'} ALOHA — G = ${G}</span>
-    <div class="sr"><span class="sk">Throughput S</span><span class="sv2">${(S*100).toFixed(3)}% &nbsp;(${S.toFixed(5)})</span></div>
-    <div class="sr"><span class="sk">P(empty slot)</span><span class="sv2">${(Pempty*100).toFixed(3)}%</span></div>
-    <div class="sr"><span class="sk">P(collision)</span><span class="sv2">${(Math.max(0,Pcoll)*100).toFixed(3)}%</span></div>
-    <div class="sr"><span class="sk">Effective Rate</span><span class="sv2">${effKbps.toFixed(3)} kbps</span></div>
-    <div class="sr"><span class="sk">P(success) Binomial (k=${k}, p=${p})</span><span class="sv2">${(pSuccBinom*100).toFixed(3)}%</span></div>
-    <div class="sr"><span class="sk">G from k·p</span><span class="sv2">${Gkp.toFixed(3)}</span></div>
-    <div class="sr"><span class="sk">Frame Time T<sub>p</sub></span><span class="sv2">${(Tp*1000).toFixed(3)} ms</span></div>
-  `.replace('pSuccBinom', pSuccB.toFixed(5));
-  // fix template literal issue
-  out.innerHTML = `
-    <span class="sol-out-title">Results for ${proto==='pure'?'Pure':'Slotted'} ALOHA — G = ${G}</span>
-    <div class="sr"><span class="sk">Throughput S</span><span class="sv2">${(S*100).toFixed(3)}% &nbsp;(${S.toFixed(5)})</span></div>
-    <div class="sr"><span class="sk">P(empty slot)</span><span class="sv2">${(Pempty*100).toFixed(3)}%</span></div>
-    <div class="sr"><span class="sk">P(collision)</span><span class="sv2">${(Math.max(0,Pcoll)*100).toFixed(3)}%</span></div>
-    <div class="sr"><span class="sk">Effective Rate</span><span class="sv2">${effKbps.toFixed(3)} kbps</span></div>
-    <div class="sr"><span class="sk">P(success) Binomial (k=${k}, p=${p})</span><span class="sv2">${(pSuccB*100).toFixed(3)}%</span></div>
-    <div class="sr"><span class="sk">G from k·p = ${k}×${p}</span><span class="sv2">${Gkp.toFixed(3)}</span></div>
-    <div class="sr"><span class="sk">Frame Time T<sub>p</sub></span><span class="sv2">${(Tp*1000).toFixed(3)} ms</span></div>
+    <span class="sol-out-title">Step-by-step solution — ${label} ALOHA &nbsp;|&nbsp; G = ${G}, k = ${k}, p = ${p}</span>
+    ${steps.map(s => `
+      <div class="sr" style="flex-direction:column;align-items:flex-start;gap:4px;padding:10px 0">
+        <div style="display:flex;gap:10px;align-items:center">
+          <span style="
+            flex-shrink:0;width:22px;height:22px;border-radius:50%;
+            background:var(--bg4);border:1px solid var(--border2);
+            font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--blue);
+            display:flex;align-items:center;justify-content:center">${s.n}</span>
+          <span class="sk" style="color:var(--text)">${s.desc}</span>
+        </div>
+        <div style="
+          margin-left:32px;font-family:var(--font-mono);font-size:12px;
+          color:var(--cyan);line-height:1.8;background:var(--bg4);
+          padding:8px 12px;border-radius:5px;border-left:2px solid var(--blue);
+          width:100%">${s.math}</div>
+      </div>
+    `).join('')}
+    <div style="margin-top:12px;padding:12px 16px;background:rgba(52,211,153,0.07);
+      border:1px solid rgba(52,211,153,0.25);border-radius:6px;
+      font-size:13px;color:var(--text);line-height:1.8">
+      <strong style="color:var(--green)">✓ Summary</strong><br>
+      S = <strong>${(S*100).toFixed(3)}%</strong> &nbsp;|&nbsp;
+      P(empty) = <strong>${(Pempty*100).toFixed(3)}%</strong> &nbsp;|&nbsp;
+      P(coll) = <strong>${(Pcoll*100).toFixed(3)}%</strong> &nbsp;|&nbsp;
+      Eff = <strong>${effKbps.toFixed(3)} kbps</strong>
+    </div>
   `;
 }
 
