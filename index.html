@@ -26,20 +26,18 @@
     <button class="nav-link" onclick="navGo('numerical', this)">∑ Numericals</button>
     <button class="nav-link" onclick="navGo('compare', this)">⇌ Compare</button>
     <button class="nav-link" onclick="navGo('video', this)">▶ Video</button>
- 
   </div>
   <div class="nav-actions">
     <button class="icon-btn" onclick="openLearn()">📖 Learn</button>
     <button class="icon-btn special" onclick="openDevBy()">👥 Developed By</button>
     <button class="icon-btn" id="themeBtn" onclick="toggleTheme()">☀ Light</button>
     <button class="icon-btn" onclick="openHelp()">? Help</button>
-    <button class="dl-btn" onclick="dlPage()">↓ Download</button>
+    <button class="dl-btn" id="dl-main-btn" onclick="dlSim()">↓ Download Sim</button>
   </div>
 </nav>
 
 <!-- ══════════════════ HERO ══════════════════ -->
 <div id="hero">
- 
   <h1 class="hero-h">
     <span class="line1">Pure &amp;</span>
     <span class="hollow">Slotted ALOHA</span>
@@ -507,12 +505,28 @@
           <input type="number" id="sol-p" value="0.2" min="0.001" max="1" step="0.001"/>
         </div>
         <div class="sf">
-          <label>Bandwidth (kbps)</label>
-          <input type="number" id="sol-bw" value="200" min="1" max="100000" step="1"/>
+          <label>Bandwidth</label>
+          <div style="display:flex;gap:6px">
+            <input type="number" id="sol-bw" value="200" min="0.001" max="100000000" step="any" style="flex:1"/>
+            <select id="sol-bw-unit">
+              <option value="bps">bps</option>
+              <option value="kbps" selected>kbps</option>
+              <option value="Mbps">Mbps</option>
+              <option value="Gbps">Gbps</option>
+            </select>
+          </div>
         </div>
         <div class="sf">
-          <label>Frame Size (bits)</label>
-          <input type="number" id="sol-frame" value="1000" min="8" max="100000" step="8"/>
+          <label>Frame Size</label>
+          <div style="display:flex;gap:6px">
+            <input type="number" id="sol-frame" value="1000" min="1" max="100000000" step="any" style="flex:1"/>
+            <select id="sol-frame-unit">
+              <option value="bits" selected>bits</option>
+              <option value="bytes">bytes</option>
+              <option value="KB">KB</option>
+              <option value="MB">MB</option>
+            </select>
+          </div>
         </div>
       </div>
       <button class="calc-btn" onclick="calcSolver()">Calculate →</button>
@@ -610,7 +624,6 @@
     </div>
   </div>
   <div class="ref-grid fade-in">
-    
     <div class="ref-card">
       <div class="r-type">Prescribed Textbook</div>
       <h4>Computer Networks</h4>
@@ -629,14 +642,12 @@
       <p>Article covering definitions, types, formulae, advantages, disadvantages, and applications.</p>
       <a class="ref-link" href="https://www.geeksforgeeks.org/aloha-in-computer-network/" target="_blank" rel="noopener">→ Read Article</a>
     </div>
- 
   </div>
 </section>
 
 <!-- ══════════════════ FOOTER ══════════════════ -->
 <footer>
   <span>ALOHAnet — Interactive Protocol Lab · <span> Computer Networks</span> · </span>
- 
 </footer>
 
 <!-- ═══════════════════════════════════════════════════
@@ -646,7 +657,6 @@
   <div class="modal learn-modal">
     <button class="m-close" onclick="closeLearn()">✕ close</button>
     <h3>📖 Learn — ALOHA Protocols</h3>
-
     <div class="learn-tabs">
       <button class="learn-tab on" onclick="showLearnTab(0, this)">Overview</button>
       <button class="learn-tab"   onclick="showLearnTab(1, this)">Pure ALOHA</button>
@@ -654,8 +664,6 @@
       <button class="learn-tab"   onclick="showLearnTab(3, this)">Formulae</button>
       <button class="learn-tab"   onclick="showLearnTab(4, this)">Quick Tips</button>
     </div>
-
-    <!-- Pane 0: Overview -->
     <div class="learn-pane on" id="lp0">
       <h4>What is ALOHA?</h4>
       <p>ALOHA is a random-access Media Access Control (MAC) protocol family developed by Norman Abramson at the University of Hawaii in 1970 for the ALOHAnet satellite network. It allows multiple stations to share a single communication channel without central coordination.</p>
@@ -665,8 +673,6 @@
       <h4>Two variants</h4>
       <p><strong>Pure ALOHA</strong> — transmit anytime. <strong>Slotted ALOHA</strong> — transmit only at slot boundaries. Slotted halves the collision window and doubles the peak throughput.</p>
     </div>
-
-    <!-- Pane 1: Pure ALOHA -->
     <div class="learn-pane" id="lp1">
       <h4>Pure ALOHA — How it works</h4>
       <p>A station transmits a frame the moment it has data. It then waits for an ACK. If no ACK arrives within a timeout, a collision is assumed. Each colliding station waits a <em>random back-off</em> period before retransmitting.</p>
@@ -677,8 +683,6 @@
       <p>Because any two frames whose transmission times overlap at all will collide. The asynchronous nature means collisions can be partial (only part of the frames overlap), but the entire frames are still destroyed.</p>
       <div class="learn-note"><strong>At G = 0.5:</strong> Only 18.4% of the channel capacity is used productively. The remaining 81.6% is lost to collisions, empty periods, and retransmissions.</div>
     </div>
-
-    <!-- Pane 2: Slotted ALOHA -->
     <div class="learn-pane" id="lp2">
       <h4>Slotted ALOHA — How it works</h4>
       <p>Time is divided into equal slots of duration T<sub>p</sub> (one frame transmission time). All stations are synchronised to a global clock. A station can only begin transmitting at a slot boundary — if data arrives mid-slot, it waits.</p>
@@ -689,8 +693,6 @@
       <p>Slotted ALOHA requires precise clock synchronisation across all stations — an infrastructure cost. In exchange, you get exactly double the throughput ceiling.</p>
       <div class="learn-note"><strong>Real-world:</strong> Slotted ALOHA is used in GSM RACH (random access channel), LTE PRACH, and BLE advertising slots.</div>
     </div>
-
-    <!-- Pane 3: Formulae -->
     <div class="learn-pane" id="lp3">
       <h4>Core Formulae Reference</h4>
       <div class="learn-formula-box">
@@ -712,8 +714,6 @@
         <li><strong>e</strong> — Euler's number ≈ 2.71828</li>
       </ul>
     </div>
-
-    <!-- Pane 4: Quick Tips -->
     <div class="learn-pane" id="lp4">
       <h4>Exam Quick Tips</h4>
       <ul>
@@ -737,17 +737,12 @@
 <div class="modal-bg" id="devByModal">
   <div class="modal devby-modal">
     <button class="m-close" onclick="closeDevBy()">✕ close</button>
-
     <span class="devby-header-tag"></span>
     <h3>Development Team</h3>
     <p class="devby-subtitle">
       Built for <strong></strong> — Computer Networks Lab as an interactive educational tool.<br>
-     
     </p>
-
     <div class="devby-team">
-
-      <!-- Professor -->
       <div class="devby-card">
         <div class="devby-avatar prof">
           <img id="prof-img" src="dr-swaminathan.jpg" alt="" />
@@ -755,14 +750,9 @@
         <div class="devby-info">
           <div class="devby-role prof-role">Faculty Advisor</div>
           <div class="devby-name">Dr. Swaminathan Annadurai</div>
-         
-      
         </div>
       </div>
-
       <div class="devby-divider"><span>Student Developer</span></div>
-
-      <!-- Student -->
       <div class="devby-card">
         <div class="devby-avatar">
           <img id="student-img" src="download.jpg" alt="" />
@@ -771,13 +761,9 @@
           <div class="devby-role">Student Developer</div>
           <div class="devby-name">P S Suraj Kumar</div>
           <div class="devby-reg">Reg. No: 24BYB1066</div>
-         
         </div>
       </div>
-
     </div>
-
-   
   </div>
 </div>
 
@@ -795,8 +781,78 @@
       <li><strong>Animated Replay</strong> — After running a simulation, use Play/Pause/Reset to step through slot by slot. Click the progress bar to seek.</li>
       <li><strong>Numericals</strong> — Tab through 8 fully-worked problems. Use the Interactive Solver for custom parameter calculations.</li>
       <li><strong>Compare</strong> — Side-by-side pros/cons and probability breakdown of both protocols.</li>
-      <li><strong>Download</strong> — Saves this complete single-file HTML to your device — works fully offline.</li>
+      <li><strong>Download</strong> — Exports simulation results (format selectable in master panel).</li>
     </ul>
+  </div>
+</div>
+
+<!-- ═══ MASTER CONTROL PANEL (hidden — Ctrl+Shift+M) ═══ -->
+<div id="masterPanel">
+  <div class="mp-header">
+    <span class="mp-title">⚙ Master Control</span>
+    <div style="display:flex;gap:6px;align-items:center">
+      <span class="mp-tag">ADMIN</span>
+      <button class="mp-close" onclick="closeMaster()">✕</button>
+    </div>
+  </div>
+  <div class="mp-body">
+    <div class="mp-section">
+      <div class="mp-section-label">🎨 Theme</div>
+      <div class="mp-theme-grid">
+        <button class="mp-theme-btn on" data-theme-val="dark"     onclick="setTheme('dark',this)">Dark</button>
+        <button class="mp-theme-btn"    data-theme-val="light"    onclick="setTheme('light',this)">Light</button>
+        <button class="mp-theme-btn"    data-theme-val="cyber"    onclick="setTheme('cyber',this)">Cyber</button>
+        <button class="mp-theme-btn"    data-theme-val="ocean"    onclick="setTheme('ocean',this)">Ocean</button>
+        <button class="mp-theme-btn"    data-theme-val="terminal" onclick="setTheme('terminal',this)">Terminal</button>
+      </div>
+    </div>
+    <div class="mp-section">
+      <div class="mp-section-label">📥 Download Format</div>
+      <div class="mp-radio-group">
+        <label class="mp-radio"><input type="radio" name="dlFmt" value="html" checked> HTML Report</label>
+        <label class="mp-radio"><input type="radio" name="dlFmt" value="png"> PNG Canvas</label>
+        <label class="mp-radio"><input type="radio" name="dlFmt" value="json"> JSON Data</label>
+        <label class="mp-radio"><input type="radio" name="dlFmt" value="csv"> CSV Log</label>
+      </div>
+    </div>
+    <div class="mp-section">
+      <div class="mp-section-label">👁 Section Visibility</div>
+      <div class="mp-toggle-list">
+        <label class="mp-toggle"><span>Throughput Chart</span><input type="checkbox" id="tog-throughput" checked onchange="toggleSection('throughput',this)"><span class="mp-slider"></span></label>
+        <label class="mp-toggle"><span>Simulation</span><input type="checkbox" id="tog-simulation" checked onchange="toggleSection('simulation',this)"><span class="mp-slider"></span></label>
+        <label class="mp-toggle"><span>Numericals</span><input type="checkbox" id="tog-numerical" checked onchange="toggleSection('numerical',this)"><span class="mp-slider"></span></label>
+        <label class="mp-toggle"><span>Compare</span><input type="checkbox" id="tog-compare" checked onchange="toggleSection('compare',this)"><span class="mp-slider"></span></label>
+        <label class="mp-toggle"><span>Video</span><input type="checkbox" id="tog-video" checked onchange="toggleSection('video',this)"><span class="mp-slider"></span></label>
+        <label class="mp-toggle"><span>References</span><input type="checkbox" id="tog-references" checked onchange="toggleSection('references',this)"><span class="mp-slider"></span></label>
+      </div>
+    </div>
+    <div class="mp-section">
+      <div class="mp-section-label">🛠 Feature Flags</div>
+      <div class="mp-toggle-list">
+        <label class="mp-toggle"><span>Animated Replay</span><input type="checkbox" id="tog-anim" checked onchange="toggleFeature('anim',this)"><span class="mp-slider"></span></label>
+        <label class="mp-toggle"><span>Simulation Log</span><input type="checkbox" id="tog-simlog" checked onchange="toggleFeature('simlog',this)"><span class="mp-slider"></span></label>
+        <label class="mp-toggle"><span>Solver Steps</span><input type="checkbox" id="tog-steps" checked onchange="toggleFeature('steps',this)"><span class="mp-slider"></span></label>
+        <label class="mp-toggle"><span>Peak Markers on Chart</span><input type="checkbox" id="tog-peaks" checked onchange="toggleFeature('peaks',this)"><span class="mp-slider"></span></label>
+        <label class="mp-toggle"><span>Throughput Table</span><input type="checkbox" id="tog-tptable" checked onchange="toggleFeature('tptable',this)"><span class="mp-slider"></span></label>
+      </div>
+    </div>
+    <div class="mp-section">
+      <div class="mp-section-label">📊 Default BW Unit</div>
+      <div class="mp-radio-group">
+        <label class="mp-radio"><input type="radio" name="defUnit" value="kbps" checked onchange="setDefaultUnit(this)"> kbps</label>
+        <label class="mp-radio"><input type="radio" name="defUnit" value="Mbps" onchange="setDefaultUnit(this)"> Mbps</label>
+        <label class="mp-radio"><input type="radio" name="defUnit" value="bps"  onchange="setDefaultUnit(this)"> bps</label>
+      </div>
+    </div>
+    <div class="mp-section">
+      <div class="mp-section-label">⚡ Quick Actions</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="mp-action-btn" onclick="dlPage()">↓ Full Page</button>
+        <button class="mp-action-btn" onclick="resetAll()">↺ Reset All</button>
+        <button class="mp-action-btn" onclick="runSim()">▶ Re-run Sim</button>
+      </div>
+    </div>
+    <div class="mp-footer">Ctrl+Shift+M to toggle · Changes apply instantly</div>
   </div>
 </div>
 
