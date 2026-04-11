@@ -44,6 +44,126 @@ function dlPage() {
   a.download = 'alohanet-interactive.html'; a.click();
 }
 
+function getDlFormat() {
+  const r = document.querySelector('input[name="dlFmt"]:checked');
+  return r ? r.value : 'html';
+}
+
+function dlSim() {
+  if (!simData) { alert('Run a simulation first before downloading.'); return; }
+  const fmt = getDlFormat();
+  if (fmt === 'png')  return dlSimPNG();
+  if (fmt === 'json') return dlSimJSON();
+  if (fmt === 'csv')  return dlSimCSV();
+  dlSimHTML();
+}
+
+function dlSimPNG() {
+  const cv = document.getElementById('sim-canvas');
+  if (!cv) return;
+  const a = document.createElement('a');
+  a.href = cv.toDataURL('image/png');
+  a.download = `aloha-sim-${simData.proto}-${Date.now()}.png`;
+  a.click();
+}
+
+function dlSimJSON() {
+  const d = simData;
+  const payload = {
+    protocol: d.proto,
+    stations: d.nSta,
+    offeredLoad_G: d.G,
+    txProbability_p: +d.p.toFixed(6),
+    slots: d.nSlots,
+    metrics: {
+      framesSent: d.slots.reduce((a,s)=>a+s.txStations.length,0),
+      successful:  d.slots.filter(s=>s.type==='success').length,
+      collisions:  d.slots.filter(s=>s.type==='collision').length,
+      throughput_S: +(d.slots.filter(s=>s.type==='success').length/d.nSlots).toFixed(5),
+    },
+    slotLog: d.slots.map((s,i)=>({slot:i,type:s.type,stations:s.txStations}))
+  };
+  const blob = new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`aloha-sim-${d.proto}-${Date.now()}.json`; a.click();
+}
+
+function dlSimCSV() {
+  const rows = ['slot,type,station_count,stations'];
+  simData.slots.forEach((s,i)=>{
+    rows.push(`${i},${s.type},${s.txStations.length},"${s.txStations.map(x=>'S'+x).join('|')}"`);
+  });
+  const blob = new Blob([rows.join('\n')],{type:'text/csv'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`aloha-sim-${simData.proto}-${Date.now()}.csv`; a.click();
+}
+
+function dlSimHTML() {
+  const d = simData;
+  const sent = d.slots.reduce((a,s)=>a+s.txStations.length,0);
+  const succ = d.slots.filter(s=>s.type==='success').length;
+  const coll = d.slots.filter(s=>s.type==='collision').length;
+  const tp   = (succ/d.nSlots).toFixed(5);
+  const cv   = document.getElementById('sim-canvas');
+  const imgSrc = cv ? cv.toDataURL('image/png') : '';
+  const tlCv  = document.getElementById('tl-canvas');
+  const tlSrc = tlCv ? tlCv.toDataURL('image/png') : '';
+
+  const logRows = d.slots.slice(0,60).map((s,i)=>{
+    const cls = s.type==='success'?'color:#34d399':s.type==='collision'?'color:#f87171':'color:#5a6278';
+    const msg = s.type==='success'?`Success (S${s.txStations[0]})`:s.type==='collision'?`Collision [${s.txStations.map(x=>'S'+x).join(', ')}]`:'Empty';
+    return `<tr><td style="color:#5a6278;font-family:monospace">sl.${String(i).padStart(2,'0')}</td><td style="${cls}">${msg}</td></tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<title>ALOHA Sim Report — ${new Date().toLocaleString()}</title>
+<style>
+  body{background:#08090b;color:#e2e4ec;font-family:'Segoe UI',sans-serif;padding:32px;max-width:900px;margin:auto}
+  h1{font-size:22px;border-bottom:1px solid #222;padding-bottom:12px;margin-bottom:24px;color:#3b9eff}
+  .badge{display:inline-block;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700;
+    background:#1c1d26;border:1px solid #333;margin-right:6px}
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0}
+  .m{background:#0f1014;border:1px solid #222;border-radius:8px;padding:14px;text-align:center}
+  .mv{font-size:28px;font-weight:700;font-family:monospace}
+  .ml{font-size:11px;color:#5a6278;margin-top:4px}
+  .green{color:#34d399}.red{color:#f87171}.blue{color:#3b9eff}
+  img{width:100%;border-radius:8px;border:1px solid #222;margin:8px 0}
+  table{width:100%;border-collapse:collapse;font-size:12px;font-family:monospace}
+  th{text-align:left;padding:6px 10px;border-bottom:1px solid #222;color:#5a6278;font-size:10px}
+  td{padding:5px 10px;border-bottom:1px solid #111}
+  .section{margin:24px 0}
+  h3{font-size:14px;color:#9ba3b8;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px}
+  .footer{margin-top:32px;padding-top:16px;border-top:1px solid #222;font-size:11px;color:#5a6278}
+</style></head><body>
+<h1>ALOHA Simulation Report</h1>
+<span class="badge">${d.proto.toUpperCase()} ALOHA</span>
+<span class="badge">G = ${d.G}</span>
+<span class="badge">${d.nSta} Stations</span>
+<span class="badge">${d.nSlots} Slots</span>
+<span class="badge">${new Date().toLocaleString()}</span>
+
+<div class="metrics">
+  <div class="m"><div class="mv">${sent}</div><div class="ml">Frames Sent</div></div>
+  <div class="m"><div class="mv green">${succ}</div><div class="ml">Successful</div></div>
+  <div class="m"><div class="mv red">${coll}</div><div class="ml">Collisions</div></div>
+  <div class="m"><div class="mv blue">${tp}</div><div class="ml">Throughput S</div></div>
+</div>
+
+<div class="section"><h3>Channel View</h3>${imgSrc?`<img src="${imgSrc}" alt="sim canvas">`:'(canvas unavailable)'}</div>
+<div class="section"><h3>Station Timeline</h3>${tlSrc?`<img src="${tlSrc}" alt="timeline">`:'(canvas unavailable)'}</div>
+
+<div class="section"><h3>Slot Log (first 60)</h3>
+<table><thead><tr><th>Slot</th><th>Event</th></tr></thead><tbody>${logRows}</tbody></table></div>
+
+<div class="footer">Generated by ALOHAnet Interactive Protocol Lab · p = ${d.p.toFixed(5)}</div>
+</body></html>`;
+
+  const blob = new Blob([html],{type:'text/html'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`aloha-sim-report-${Date.now()}.html`; a.click();
+}
+
 /* ─── COLOR HELPER ─── */
 const C = {
   bg2:   () => getComputedStyle(document.documentElement).getPropertyValue('--bg2').trim(),
@@ -118,7 +238,7 @@ function drawChart() {
     { G:0.5, S:0.5*Math.exp(-1), label:'Pure: G=0.5, S=0.184', color:C.amber() },
     { G:1.0, S:Math.exp(-1),     label:'Slotted: G=1.0, S=0.368', color:C.blue() },
   ];
-  peaks.forEach(pt => {
+  if (window._showPeaks !== false) peaks.forEach(pt => {
     const px = toX(pt.G), py = toY(pt.S);
     ctx.strokeStyle = C.dim(); ctx.lineWidth = 0.8; ctx.setLineDash([3,4]);
     ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, PAD.t+ch); ctx.stroke();
@@ -384,12 +504,23 @@ function showP(i) {
 }
 
 function calcSolver() {
-  const proto = document.getElementById('sol-proto').value;
-  const G     = parseFloat(document.getElementById('sol-G').value) || 0.5;
-  const k     = parseInt(document.getElementById('sol-k').value)   || 5;
-  const p     = parseFloat(document.getElementById('sol-p').value) || 0.2;
-  const bw    = parseFloat(document.getElementById('sol-bw').value)    || 200;
-  const fsize = parseFloat(document.getElementById('sol-frame').value) || 1000;
+  const proto  = document.getElementById('sol-proto').value;
+  const G      = parseFloat(document.getElementById('sol-G').value) || 0.5;
+  const k      = parseInt(document.getElementById('sol-k').value)   || 5;
+  const p      = parseFloat(document.getElementById('sol-p').value) || 0.2;
+
+  // ── bandwidth with unit conversion ──
+  const bwRaw    = parseFloat(document.getElementById('sol-bw').value) || 200;
+  const bwUnit   = document.getElementById('sol-bw-unit').value;
+  const bwUnitMul = { bps:1, kbps:1e3, Mbps:1e6, Gbps:1e9 }[bwUnit];
+  const bwBps    = bwRaw * bwUnitMul;           // always in bps
+  const bwKbps   = bwBps / 1e3;                 // for display
+
+  // ── frame size with unit conversion ──
+  const fsRaw    = parseFloat(document.getElementById('sol-frame').value) || 1000;
+  const fsUnit   = document.getElementById('sol-frame-unit').value;
+  const fsUnitMul= { bits:1, bytes:8, KB:8192, MB:8388608 }[fsUnit];
+  const fsBits   = fsRaw * fsUnitMul;           // always in bits
 
   const isPure  = proto === 'pure';
   const S       = isPure ? G*Math.exp(-2*G) : G*Math.exp(-G);
@@ -397,53 +528,89 @@ function calcSolver() {
   const Pcoll   = Math.max(0, 1-Pempty-S);
   const pSuccB  = k*p*Math.pow(1-p, k-1);
   const Gkp     = k*p;
-  const Tp      = fsize/(bw*1000);
-  const effKbps = S*bw;
-  const diff    = Math.abs(pSuccB-S);
+  const Tp      = fsBits / bwBps;              // seconds
+  const effBps  = S * bwBps;
   const label   = isPure ? 'Pure' : 'Slotted';
   const expVal  = isPure ? Math.exp(-2*G) : Math.exp(-G);
 
+  // ── unit-aware display helpers ──
+  const fmtBW = bps => {
+    if (bps >= 1e9) return `${(bps/1e9).toFixed(4)} Gbps`;
+    if (bps >= 1e6) return `${(bps/1e6).toFixed(4)} Mbps`;
+    if (bps >= 1e3) return `${(bps/1e3).toFixed(4)} kbps`;
+    return `${bps.toFixed(4)} bps`;
+  };
+  const fmtFS = bits => {
+    if (bits >= 8388608) return `${(bits/8388608).toFixed(4)} MB (${bits.toLocaleString()} bits)`;
+    if (bits >= 8192) return `${(bits/8192).toFixed(4)} KB (${bits.toLocaleString()} bits)`;
+    if (bits % 8 === 0) return `${bits} bits (${bits/8} bytes)`;
+    return `${bits} bits`;
+  };
+  const fmtTime = s => {
+    if (s < 1e-6) return `${(s*1e9).toFixed(4)} ns`;
+    if (s < 1e-3) return `${(s*1e6).toFixed(4)} µs`;
+    if (s < 1)    return `${(s*1e3).toFixed(4)} ms`;
+    return `${s.toFixed(4)} s`;
+  };
+
+  const showSteps = document.getElementById('tog-steps') ? document.getElementById('tog-steps').checked : true;
+
   const steps = [
     {
-      n:1, desc:`<strong>Throughput S</strong> — Apply ${label} ALOHA formula`,
-      math:`S = ${isPure?'G·e^(−2G)':'G·e^(−G)'} = ${G} × ${expVal.toFixed(5)}<br>
-            <strong>= ${S.toFixed(5)} &nbsp;(${(S*100).toFixed(3)}%)</strong>`
+      n:1, desc:`<strong>Unit Conversion</strong> — Normalise inputs`,
+      math:`Bandwidth: ${bwRaw} ${bwUnit} → <strong>${fmtBW(bwBps)}</strong> = ${bwBps.toExponential(4)} bps<br>
+            Frame size: ${fsRaw} ${fsUnit} → <strong>${fmtFS(fsBits)}</strong>`
     },
     {
-      n:2, desc:`<strong>P(empty ${isPure?'period':'slot'})</strong> — No station transmits`,
-      math:`P(empty) = e^(${isPure?'−2G':'−G'}) = ${Pempty.toFixed(5)}<br>
-            <strong>(${(Pempty*100).toFixed(3)}%)</strong>`
+      n:2, desc:`<strong>Throughput S</strong> — Apply ${label} ALOHA formula`,
+      math:`Formula: S = ${isPure?'G · e^(−2G)':'G · e^(−G)'}<br>
+            e^(${isPure?'−2×':'−'}${G}) = e^(${isPure?-2*G:-G}) = <strong>${expVal.toFixed(6)}</strong><br>
+            S = ${G} × ${expVal.toFixed(6)} = <strong>${S.toFixed(6)} &nbsp;(${(S*100).toFixed(4)}%)</strong>`
     },
     {
-      n:3, desc:`<strong>P(collision)</strong> — At least two transmit simultaneously`,
-      math:`P(coll) = 1 − ${Pempty.toFixed(5)} − ${S.toFixed(5)}<br>
-            <strong>= ${Pcoll.toFixed(5)} &nbsp;(${(Pcoll*100).toFixed(3)}%)</strong>`
+      n:3, desc:`<strong>P(empty ${isPure?'period':'slot'})</strong> — No station transmits in vulnerable window`,
+      math:`P(empty) = e^(${isPure?'−2G':'−G'}) = e^(${isPure?-2*G:-G})<br>
+            = <strong>${Pempty.toFixed(6)} &nbsp;(${(Pempty*100).toFixed(4)}%)</strong><br>
+            <span style="color:var(--dim);font-size:11px">Vulnerable period = ${isPure?'2×T_p (both directions)':'T_p (slot-aligned)'}</span>`
     },
     {
-      n:4, desc:`<strong>P(success) Binomial</strong> — Exactly 1 of ${k} stations transmits`,
-      math:`P_s = k·p·(1−p)^(k−1) = ${k}×${p}×${Math.pow(1-p,k-1).toFixed(6)}<br>
-            <strong>= ${pSuccB.toFixed(5)} &nbsp;(${(pSuccB*100).toFixed(3)}%)</strong>`
+      n:4, desc:`<strong>P(collision)</strong> — Remainder after empty + success`,
+      math:`P(coll) = 1 − P(empty) − P(success)<br>
+            = 1 − ${Pempty.toFixed(6)} − ${S.toFixed(6)}<br>
+            = <strong>${Pcoll.toFixed(6)} &nbsp;(${(Pcoll*100).toFixed(4)}%)</strong><br>
+            Verify: ${Pempty.toFixed(4)} + ${S.toFixed(4)} + ${Pcoll.toFixed(4)} = ${(Pempty+S+Pcoll).toFixed(4)} ≈ 1 ✓`
     },
     {
-      n:5, desc:`<strong>Offered load from k·p</strong>`,
-      math:`G_kp = ${k}×${p} = <strong>${Gkp.toFixed(4)}</strong>
-            ${Math.abs(Gkp-G)>0.01?`<span style="color:var(--amber)"> ⚠ differs from input G=${G}</span>`:'✓ consistent'}`
+      n:5, desc:`<strong>P(success) Binomial</strong> — Exactly 1 of ${k} stations transmits`,
+      math:`Formula: P_s = k · p · (1−p)^(k−1)<br>
+            (1−p)^(k−1) = (1−${p})^(${k}−1) = (${1-p})^${k-1} = <strong>${Math.pow(1-p,k-1).toFixed(6)}</strong><br>
+            P_s = ${k} × ${p} × ${Math.pow(1-p,k-1).toFixed(6)} = <strong>${pSuccB.toFixed(6)} &nbsp;(${(pSuccB*100).toFixed(4)}%)</strong>`
     },
     {
-      n:6, desc:`<strong>Frame time T<sub>p</sub></strong>`,
-      math:`T_p = ${fsize} / ${bw*1000} = <strong>${(Tp*1000).toFixed(4)} ms</strong>`
+      n:6, desc:`<strong>Offered load cross-check</strong> — G vs k·p consistency`,
+      math:`G_input = ${G} &nbsp;&nbsp; G_kp = k × p = ${k} × ${p} = <strong>${Gkp.toFixed(4)}</strong><br>
+            ${Math.abs(Gkp-G)>0.01?`<span style="color:var(--amber)">⚠ Differ by ${Math.abs(Gkp-G).toFixed(4)} — inputs may be inconsistent</span>`:'<span style="color:var(--green)">✓ Consistent</span>'}`
     },
     {
-      n:7, desc:`<strong>Effective throughput</strong>`,
-      math:`Eff = ${S.toFixed(5)} × ${bw} kbps = <strong>${effKbps.toFixed(4)} kbps</strong> (${(S*100).toFixed(2)}% of capacity)`
+      n:7, desc:`<strong>Frame transmission time T_p</strong>`,
+      math:`T_p = Frame Size / Bandwidth<br>
+            = ${fsBits} bits ÷ ${bwBps.toExponential(4)} bps<br>
+            = <strong>${fmtTime(Tp)}</strong> = ${Tp.toFixed(8)} s`
+    },
+    {
+      n:8, desc:`<strong>Effective throughput</strong> — Actual data rate achieved`,
+      math:`Eff = S × Bandwidth<br>
+            = ${S.toFixed(6)} × ${fmtBW(bwBps)}<br>
+            = <strong>${fmtBW(effBps)}</strong> &nbsp;(${(S*100).toFixed(3)}% of ${fmtBW(bwBps)} capacity)<br>
+            Effective frames/sec = ${S.toFixed(6)} / ${fmtTime(Tp)} = <strong>${(S/Tp).toFixed(2)} frames/sec</strong>`
     }
   ];
 
   const out = document.getElementById('sol-out');
   out.style.display = 'block';
   out.innerHTML = `
-    <span class="sol-out-title">Step-by-step — ${label} ALOHA | G=${G}, k=${k}, p=${p}</span>
-    ${steps.map(s=>`
+    <span class="sol-out-title">Step-by-step — ${label} ALOHA | G=${G}, k=${k}, p=${p}, BW=${bwRaw} ${bwUnit}, Frame=${fsRaw} ${fsUnit}</span>
+    ${showSteps ? steps.map(s=>`
       <div class="sr" style="flex-direction:column;align-items:flex-start;gap:4px;padding:10px 0">
         <div style="display:flex;gap:10px;align-items:center">
           <span style="width:22px;height:22px;border-radius:50%;background:var(--bg4);border:1px solid var(--border2);
@@ -455,23 +622,118 @@ function calcSolver() {
           line-height:1.8;background:var(--bg4);padding:8px 12px;border-radius:5px;
           border-left:2px solid var(--blue);width:100%">${s.math}</div>
       </div>
-    `).join('')}
+    `).join('') : '<div style="color:var(--dim);padding:10px 0;font-size:12px;font-family:var(--font-mono)">[Steps hidden — toggle in Master Control]</div>'}
     <div style="margin-top:12px;padding:12px;background:var(--bg4);border:1px solid var(--border2);border-radius:6px;font-family:var(--font-mono);font-size:12px;">
-      <div><strong>Poisson Throughput (S)</strong> = ${S.toFixed(5)}</div>
-      <div><strong>Binomial Success (Pₛ)</strong> = ${pSuccB.toFixed(5)}</div>
-      <div><strong>Difference</strong> ≈ ${diff.toFixed(5)}</div>
+      <div><strong>Poisson Throughput (S)</strong> = ${S.toFixed(6)}</div>
+      <div><strong>Binomial Success (Pₛ)</strong> = ${pSuccB.toFixed(6)}</div>
+      <div><strong>Difference</strong> ≈ ${Math.abs(pSuccB-S).toFixed(6)}</div>
     </div>
     <div style="margin-top:10px;padding:10px;background:rgba(255,255,255,0.03);border-left:3px solid var(--amber);border-radius:6px;font-size:12px;color:var(--text2);">
-      <strong style="color:var(--amber)">Note:</strong> S = G·e^(−G) uses Poisson (infinite users), while k·p·(1−p)^(k−1) uses finite stations.
+      <strong style="color:var(--amber)">Note:</strong> S = G·e^(−G) uses Poisson assumption (infinite users / large k), while k·p·(1−p)^(k−1) is exact binomial for finite k stations.
     </div>
     <div style="margin-top:12px;padding:12px 16px;background:rgba(52,211,153,0.07);border:1px solid rgba(52,211,153,0.25);border-radius:6px;">
       <strong style="color:var(--green)">✓ Summary</strong><br>
-      S = <strong>${(S*100).toFixed(3)}%</strong> &nbsp;|&nbsp;
-      P(empty) = <strong>${(Pempty*100).toFixed(3)}%</strong> &nbsp;|&nbsp;
-      P(coll) = <strong>${(Pcoll*100).toFixed(3)}%</strong> &nbsp;|&nbsp;
-      Eff = <strong>${effKbps.toFixed(3)} kbps</strong>
+      S = <strong>${(S*100).toFixed(4)}%</strong> &nbsp;|&nbsp;
+      P(empty) = <strong>${(Pempty*100).toFixed(4)}%</strong> &nbsp;|&nbsp;
+      P(coll) = <strong>${(Pcoll*100).toFixed(4)}%</strong> &nbsp;|&nbsp;
+      Eff = <strong>${fmtBW(effBps)}</strong> &nbsp;|&nbsp;
+      T_p = <strong>${fmtTime(Tp)}</strong>
     </div>
   `;
+}
+
+/* ─── MASTER CONTROL PANEL ─── */
+let masterOpen = false;
+function openMaster()  { masterOpen=true;  document.getElementById('masterPanel').classList.add('open'); }
+function closeMaster() { masterOpen=false; document.getElementById('masterPanel').classList.remove('open'); }
+
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey && e.shiftKey && e.key === 'M') { e.preventDefault(); masterOpen ? closeMaster() : openMaster(); }
+});
+
+/* ─── THEME ENGINE ─── */
+const THEMES = {
+  dark:     { bg:'#08090b', bg2:'#0f1014', bg3:'#16171d', bg4:'#1c1d26',
+              border:'rgba(255,255,255,0.06)', border2:'rgba(255,255,255,0.12)',
+              amber:'#f0b429', blue:'#3b9eff', green:'#34d399', red:'#f87171',
+              cyan:'#67e8f9', purple:'#a78bfa', text:'#e2e4ec', text2:'#9ba3b8', dim:'#5a6278' },
+  light:    { bg:'#f5f6fa', bg2:'#ffffff', bg3:'#eef0f6', bg4:'#e4e7f0',
+              border:'rgba(0,0,0,0.08)', border2:'rgba(0,0,0,0.15)',
+              amber:'#d97706', blue:'#2563eb', green:'#059669', red:'#dc2626',
+              cyan:'#0891b2', purple:'#7c3aed', text:'#1a1c28', text2:'#4a5068', dim:'#8892a8' },
+  cyber:    { bg:'#0d001a', bg2:'#130026', bg3:'#1a0033', bg4:'#220040',
+              border:'rgba(200,0,255,0.12)', border2:'rgba(200,0,255,0.25)',
+              amber:'#ff0090', blue:'#c800ff', green:'#00ffcc', red:'#ff2060',
+              cyan:'#ff00ff', purple:'#ff80ff', text:'#f0d0ff', text2:'#c090ee', dim:'#7040a0' },
+  ocean:    { bg:'#030d18', bg2:'#061624', bg3:'#091f30', bg4:'#0d283d',
+              border:'rgba(0,180,220,0.1)', border2:'rgba(0,180,220,0.2)',
+              amber:'#fbbf24', blue:'#06b6d4', green:'#10b981', red:'#f87171',
+              cyan:'#67e8f9', purple:'#818cf8', text:'#cce9ff', text2:'#7fb3d0', dim:'#3a6070' },
+  terminal: { bg:'#000800', bg2:'#001200', bg3:'#001a00', bg4:'#002200',
+              border:'rgba(0,255,0,0.08)', border2:'rgba(0,255,0,0.18)',
+              amber:'#00ff88', blue:'#00ff00', green:'#88ff00', red:'#ff4400',
+              cyan:'#00ffaa', purple:'#00ff66', text:'#00ff00', text2:'#00cc00', dim:'#006600' },
+};
+
+let currentThemeName = 'dark';
+function setTheme(name, btn) {
+  currentThemeName = name;
+  const t = THEMES[name];
+  if (!t) return;
+  const root = document.documentElement;
+  Object.entries(t).forEach(([k,v]) => root.style.setProperty('--'+k, v));
+  // nav bg
+  if (name==='light') {
+    document.querySelector('nav').style.background='rgba(245,246,250,0.92)';
+  } else {
+    document.querySelector('nav').style.background='rgba(8,9,11,0.0)';
+  }
+  document.documentElement.dataset.theme = (name==='light')?'light':'dark';
+  document.getElementById('themeBtn').textContent = name==='light'?'☾ Dark':'☀ Light';
+  document.querySelectorAll('.mp-theme-btn').forEach(b=>b.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  drawChart();
+  if (simData) { drawSimCanvas(simData); drawTimelineCanvas(simData); drawAnimFrame(animCurrentSlot); }
+}
+
+/* override toggleTheme to sync with master panel */
+function toggleTheme() {
+  const next = currentThemeName === 'light' ? 'dark' : 'light';
+  const btn  = document.querySelector(`.mp-theme-btn[data-theme-val="${next}"]`);
+  setTheme(next, btn);
+}
+
+/* ─── SECTION VISIBILITY ─── */
+function toggleSection(id, cb) {
+  const sec = document.getElementById(id);
+  if (!sec) return;
+  sec.style.display = cb.checked ? '' : 'none';
+}
+
+/* ─── FEATURE FLAGS ─── */
+function toggleFeature(feat, cb) {
+  if (feat==='anim')    { const el=document.querySelector('.anim-wrapper'); if(el) el.style.display=cb.checked?'':'none'; }
+  if (feat==='simlog')  { const el=document.getElementById('sim-log');      if(el) el.style.display=cb.checked?'':'none'; }
+  if (feat==='tptable') { const el=document.getElementById('throughput-table'); if(el) el.closest('.tbl-wrap').style.display=cb.checked?'':'none'; }
+  if (feat==='peaks')   { window._showPeaks = cb.checked; drawChart(); }
+  // steps handled inside calcSolver via tog-steps checkbox
+}
+
+/* peak marker toggle support */
+window._showPeaks = true;
+
+/* ─── DEFAULT UNIT ─── */
+function setDefaultUnit(radio) {
+  const sel = document.getElementById('sol-bw-unit');
+  if (sel) sel.value = radio.value;
+}
+
+/* ─── RESET ALL ─── */
+function resetAll() {
+  document.getElementById('s-sta').value = 4;
+  document.getElementById('s-g').value   = 5;
+  document.getElementById('s-sl').value  = 24;
+  updVals(); runSim();
 }
 
 /* ─── SCROLL FADE ─── */
