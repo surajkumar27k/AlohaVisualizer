@@ -503,6 +503,431 @@ function showP(i) {
   document.querySelectorAll('.num-prob').forEach((p,idx) => p.classList.toggle('on',idx===i));
 }
 
+/* ─── SMART SOLVER ─── */
+function smartSolve(type, btn) {
+  // Highlight active button
+  document.querySelectorAll('.smart-prob-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  // Read ALL inputs
+  const proto   = document.getElementById('sol-proto').value;
+  const G       = parseFloat(document.getElementById('sol-G').value)        || 0.5;
+  const k       = parseInt(document.getElementById('sol-k').value)          || 5;
+  const p       = parseFloat(document.getElementById('sol-p').value)        || 0.2;
+  const bwRaw   = parseFloat(document.getElementById('sol-bw').value)       || 200;
+  const bwUnit  = document.getElementById('sol-bw-unit').value;
+  const fsRaw   = parseFloat(document.getElementById('sol-frame').value)    || 1000;
+  const fsUnit  = document.getElementById('sol-frame-unit').value;
+  const Starget = parseFloat(document.getElementById('sol-S-target').value) || 0.10;
+  const Spct    = parseFloat(document.getElementById('sol-S-pct').value)    || 30;
+
+  const bwMul   = { bps:1, kbps:1e3, Mbps:1e6, Gbps:1e9 }[bwUnit];
+  const fsMul   = { bits:1, bytes:8, KB:8192, MB:8388608 }[fsUnit];
+  const bwBps   = bwRaw * bwMul;
+  const fsBits  = fsRaw * fsMul;
+  const isPure  = proto === 'pure';
+  const label   = isPure ? 'Pure' : 'Slotted';
+  const Tp      = fsBits / bwBps;
+
+  // Core computed values
+  const S       = isPure ? G * Math.exp(-2*G)  : G * Math.exp(-G);
+  const Pempty  = isPure ? Math.exp(-2*G)       : Math.exp(-G);
+  const Pcoll   = Math.max(0, 1 - Pempty - S);
+  const pSuccB  = k * p * Math.pow(1-p, k-1);
+  const effBps  = S * bwBps;
+
+  // Formatters
+  const fBW = b => {
+    if (b >= 1e9) return `${(b/1e9).toFixed(4)} Gbps`;
+    if (b >= 1e6) return `${(b/1e6).toFixed(4)} Mbps`;
+    if (b >= 1e3) return `${(b/1e3).toFixed(4)} kbps`;
+    return `${b.toFixed(4)} bps`;
+  };
+  const fFS = bits => {
+    if (bits >= 8388608) return `${(bits/8388608).toFixed(4)} MB`;
+    if (bits >= 8192)    return `${(bits/8192).toFixed(4)} KB`;
+    if (bits % 8 === 0)  return `${bits} bits (${bits/8} bytes)`;
+    return `${bits} bits`;
+  };
+  const fT = s => {
+    if (s < 1e-6) return `${(s*1e9).toFixed(4)} ns`;
+    if (s < 1e-3) return `${(s*1e6).toFixed(4)} µs`;
+    if (s < 1)    return `${(s*1e3).toFixed(4)} ms`;
+    return `${s.toFixed(6)} s`;
+  };
+  const pct = v => `${(v*100).toFixed(4)}%`;
+
+  // Build steps array for given type
+  let title = '', steps = [], summary = '', note = '';
+
+  if (type === 'throughput') {
+    title = `Find Throughput S — ${label} ALOHA`;
+    steps = [
+      { n:1, desc:'Identify formula for the protocol',
+        math:`${label} ALOHA formula: <strong>S = G · e<sup>${isPure?'−2G':'−G'}</sup></strong>` },
+      { n:2, desc:'Substitute offered load G',
+        math:`G = <strong>${G}</strong><br>
+              Exponent = ${isPure?`−2 × ${G} = ${(-2*G).toFixed(4)}`:`−${G}`}<br>
+              e<sup>${isPure?(-2*G).toFixed(4):(-G).toFixed(4)}</sup> = <strong>${(isPure?Math.exp(-2*G):Math.exp(-G)).toFixed(6)}</strong>` },
+      { n:3, desc:'Calculate S',
+        math:`S = ${G} × ${(isPure?Math.exp(-2*G):Math.exp(-G)).toFixed(6)}<br>
+              S = <strong>${S.toFixed(6)}</strong>` },
+      { n:4, desc:'Convert to percentage',
+        math:`S = ${S.toFixed(6)} × 100 = <strong>${pct(S)}</strong> channel utilisation` },
+    ];
+    summary = `<strong style="color:var(--green)">✓ Throughput S = ${S.toFixed(6)} = ${pct(S)}</strong>`;
+    note = `${label} ALOHA max possible is ${isPure?'18.4% at G=0.5':'36.8% at G=1.0'}. Your G=${G} gives ${pct(S)}.`;
+
+  } else if (type === 'probabilities') {
+    title = `Find All Probabilities — ${label} ALOHA at G = ${G}`;
+    steps = [
+      { n:1, desc:'Throughput S = P(exactly one station transmits successfully)',
+        math:`S = G · e<sup>${isPure?'−2G':'−G'}</sup> = ${G} · e<sup>${isPure?-2*G:-G}</sup><br>
+              S = <strong>${S.toFixed(6)} = ${pct(S)}</strong>` },
+      { n:2, desc:`P(empty ${isPure?'period':'slot'}) — no station transmits in vulnerable window`,
+        math:`P(empty) = e<sup>${isPure?'−2G':'−G'}</sup> = e<sup>${isPure?(-2*G).toFixed(4):(-G).toFixed(4)}</sup><br>
+              P(empty) = <strong>${Pempty.toFixed(6)} = ${pct(Pempty)}</strong><br>
+              <span style="color:var(--dim)">Vulnerable period = ${isPure?'2×T_p (Pure ALOHA)':'1×T_p (Slotted ALOHA)'}</span>` },
+      { n:3, desc:'P(collision) — two or more stations transmit simultaneously',
+        math:`P(collision) = 1 − P(empty) − P(success)<br>
+              = 1 − ${Pempty.toFixed(6)} − ${S.toFixed(6)}<br>
+              P(collision) = <strong>${Pcoll.toFixed(6)} = ${pct(Pcoll)}</strong>` },
+      { n:4, desc:'Verify all three probabilities sum to 1',
+        math:`P(empty) + P(success) + P(collision)<br>
+              = ${Pempty.toFixed(6)} + ${S.toFixed(6)} + ${Pcoll.toFixed(6)}<br>
+              = <strong>${(Pempty+S+Pcoll).toFixed(4)} ≈ 1.0000 ✓</strong>` },
+    ];
+    summary = `P(empty) = <strong>${pct(Pempty)}</strong> &nbsp;|&nbsp; P(success) = <strong>${pct(S)}</strong> &nbsp;|&nbsp; P(collision) = <strong>${pct(Pcoll)}</strong>`;
+    note = `Always check: P(empty) + P(success) + P(collision) = 1. Useful exam cross-check.`;
+
+  } else if (type === 'binomial') {
+    title = `P(Success) Binomial — k = ${k} stations, p = ${p}`;
+    const oneminp_km1 = Math.pow(1-p, k-1);
+    steps = [
+      { n:1, desc:'Binomial success formula — exactly 1 of k stations transmits',
+        math:`<strong>P<sub>s</sub> = k · p · (1−p)<sup>k−1</sup></strong><br>
+              = C(${k},1) · p · (1−p)<sup>${k}−1</sup>` },
+      { n:2, desc:`Compute (1−p)<sup>k−1</sup>`,
+        math:`(1 − ${p})<sup>${k-1}</sup> = (${(1-p).toFixed(4)})<sup>${k-1}</sup><br>
+              = <strong>${oneminp_km1.toFixed(6)}</strong>` },
+      { n:3, desc:'Substitute all values',
+        math:`P<sub>s</sub> = ${k} × ${p} × ${oneminp_km1.toFixed(6)}<br>
+              = <strong>${pSuccB.toFixed(6)} = ${pct(pSuccB)}</strong>` },
+      { n:4, desc:'Check if p is already optimal',
+        math:`Optimal p = 1/k = 1/${k} = <strong>${(1/k).toFixed(4)}</strong><br>
+              Your p = ${p} ${Math.abs(p - 1/k) < 0.001 ? '→ <strong style="color:var(--green)">Already optimal! ✓</strong>' : `→ <span style="color:var(--amber)">Not optimal. Try p = ${(1/k).toFixed(4)} for best result.</span>`}` },
+    ];
+    const pOptSucc = k * (1/k) * Math.pow(1 - 1/k, k-1);
+    summary = `P(success) = <strong>${pSuccB.toFixed(6)} = ${pct(pSuccB)}</strong><br>
+               At optimal p = 1/k = ${(1/k).toFixed(4)}: Max P(success) = <strong>${pOptSucc.toFixed(6)} = ${pct(pOptSucc)}</strong>`;
+    note = `Binomial model is exact for finite k stations. Poisson model (S = G·e^{-G}) is the large-k approximation.`;
+
+  } else if (type === 'optimal_p') {
+    const pOpt     = isPure ? 1/(2*k) : 1/k;
+    const PsOpt    = k * pOpt * Math.pow(1-pOpt, k-1);
+    title = `Optimal p & Max P(success) — ${label} ALOHA, k = ${k}`;
+    steps = [
+      { n:1, desc:`Optimal transmission probability formula for ${label} ALOHA`,
+        math:`${isPure
+          ? `Pure ALOHA: <strong>p* = 1 / (2k) = 1 / (2×${k}) = ${pOpt.toFixed(6)}</strong>`
+          : `Slotted ALOHA: <strong>p* = 1 / k = 1 / ${k} = ${pOpt.toFixed(6)}</strong>`}` },
+      { n:2, desc:'Substitute p* into binomial success formula',
+        math:`P<sub>s,max</sub> = k · p* · (1−p*)<sup>k−1</sup><br>
+              = ${k} × ${pOpt.toFixed(6)} × (1 − ${pOpt.toFixed(6)})<sup>${k-1}</sup><br>
+              = ${k} × ${pOpt.toFixed(6)} × (${(1-pOpt).toFixed(6)})<sup>${k-1}</sup>` },
+      { n:3, desc:`Compute (1−p*)<sup>k−1</sup>`,
+        math:`(${(1-pOpt).toFixed(6)})<sup>${k-1}</sup> = <strong>${Math.pow(1-pOpt,k-1).toFixed(6)}</strong>` },
+      { n:4, desc:'Final result',
+        math:`P<sub>s,max</sub> = ${k} × ${pOpt.toFixed(6)} × ${Math.pow(1-pOpt,k-1).toFixed(6)}<br>
+              = <strong>${PsOpt.toFixed(6)} = ${pct(PsOpt)}</strong>` },
+      { n:5, desc:'Intuition — as k → ∞',
+        math:`P<sub>s,max</sub> → (1 − 1/k)<sup>k−1</sup> → 1/e ≈ 0.3679 as k → ∞<br>
+              At k=${k}: P<sub>s,max</sub> = <strong>${pct(PsOpt)}</strong> (${k<20?'small k, so slightly above 1/e':'approaches 1/e'})` },
+    ];
+    summary = `Optimal p* = <strong>${pOpt.toFixed(6)}</strong> &nbsp;|&nbsp; Max P(success) = <strong>${pct(PsOpt)}</strong>`;
+    note = `Setting every station to p = 1/k (Slotted) or 1/(2k) (Pure) maximises the probability that exactly one station transmits per slot.`;
+
+  } else if (type === 'frame_time') {
+    title = `Frame Transmission Time T\u209A`;
+    steps = [
+      { n:1, desc:'Convert frame size to bits',
+        math:`Frame size = ${fsRaw} ${fsUnit}<br>
+              Conversion factor: 1 ${fsUnit} = ${fsMul} bits<br>
+              Frame size = ${fsRaw} × ${fsMul} = <strong>${fsBits.toLocaleString()} bits</strong>` },
+      { n:2, desc:'Convert bandwidth to bps',
+        math:`Bandwidth = ${bwRaw} ${bwUnit}<br>
+              Conversion factor: 1 ${bwUnit} = ${bwMul.toExponential()} bps<br>
+              Bandwidth = ${bwRaw} × ${bwMul.toExponential()} = <strong>${fBW(bwBps)}</strong>` },
+      { n:3, desc:'Apply formula T_p = Frame Size / Bandwidth',
+        math:`T_p = ${fsBits.toLocaleString()} bits ÷ ${bwBps.toExponential(4)} bps<br>
+              T_p = <strong>${fT(Tp)}</strong> = ${Tp.toFixed(8)} s` },
+      { n:4, desc:'Maximum channel capacity (frames/sec)',
+        math:`Max frames/sec = 1 / T_p = 1 / ${Tp.toFixed(8)}<br>
+              = <strong>${(1/Tp).toFixed(2)} frames/sec</strong>` },
+    ];
+    summary = `T\u209A = <strong>${fT(Tp)}</strong> &nbsp;|&nbsp; Max capacity = <strong>${(1/Tp).toFixed(2)} frames/sec</strong>`;
+    note = `T_p is the time to transmit ONE frame completely. It is the fundamental time unit for ALOHA analysis.`;
+
+  } else if (type === 'effective_bw') {
+    const framesPerSec = S / Tp;
+    title = `Effective Throughput in ${fBW(bwBps)} — ${label} ALOHA`;
+    steps = [
+      { n:1, desc:'Calculate frame transmission time T_p',
+        math:`T_p = ${fsBits} bits ÷ ${fBW(bwBps)} = <strong>${fT(Tp)}</strong>` },
+      { n:2, desc:`Calculate throughput S using ${label} ALOHA formula`,
+        math:`S = ${isPure?'G · e^(−2G)':'G · e^(−G)'} = ${G} · e<sup>${isPure?(-2*G).toFixed(4):(-G).toFixed(4)}</sup><br>
+              S = <strong>${S.toFixed(6)} = ${pct(S)}</strong>` },
+      { n:3, desc:'Calculate successful frames per second',
+        math:`Frames/sec = S / T_p = ${S.toFixed(6)} / ${Tp.toFixed(8)}<br>
+              = <strong>${framesPerSec.toFixed(2)} frames/sec</strong>` },
+      { n:4, desc:'Calculate effective data rate',
+        math:`Effective BW = S × Channel Bandwidth<br>
+              = ${S.toFixed(6)} × ${fBW(bwBps)}<br>
+              = <strong>${fBW(effBps)}</strong>` },
+      { n:5, desc:'Alternative: frames/sec × frame size',
+        math:`Effective BW = ${framesPerSec.toFixed(2)} frames/sec × ${fsBits} bits/frame<br>
+              = <strong>${fBW(effBps)}</strong> ✓ (same answer)` },
+    ];
+    summary = `S = <strong>${pct(S)}</strong> &nbsp;|&nbsp; Eff. BW = <strong>${fBW(effBps)}</strong> &nbsp;|&nbsp; ${framesPerSec.toFixed(2)} frames/sec`;
+    note = `Effective throughput = ${pct(S)} of ${fBW(bwBps)} channel capacity. The remaining ${pct(1-S)} is wasted on collisions and idle periods.`;
+
+  } else if (type === 'max_throughput') {
+    const Gopt  = isPure ? 0.5 : 1.0;
+    const Smax  = isPure ? 0.5*Math.exp(-1) : Math.exp(-1);
+    title = `Maximum Throughput & Optimal G — ${label} ALOHA`;
+    steps = [
+      { n:1, desc:'Write the throughput formula',
+        math:`${label} ALOHA: S = ${isPure?'G · e^(−2G)':'G · e^(−G)'}` },
+      { n:2, desc:'Differentiate S with respect to G and set to zero',
+        math:isPure
+          ? `dS/dG = e^(−2G) + G · (−2) · e^(−2G)<br>
+             = e^(−2G) · (1 − 2G) = 0<br>
+             Since e^(−2G) ≠ 0 → <strong>1 − 2G = 0</strong>`
+          : `dS/dG = e^(−G) + G · (−1) · e^(−G)<br>
+             = e^(−G) · (1 − G) = 0<br>
+             Since e^(−G) ≠ 0 → <strong>1 − G = 0</strong>` },
+      { n:3, desc:'Solve for optimal G*',
+        math:isPure
+          ? `2G = 1 → <strong>G* = 0.5</strong>`
+          : `G = 1 → <strong>G* = 1.0</strong>` },
+      { n:4, desc:'Substitute G* to find S_max',
+        math:`S_max = ${isPure?'G* · e^(−2×G*)':'G* · e^(−G*)'}<br>
+              = ${Gopt} × e<sup>${isPure?-1:-1}</sup><br>
+              = ${Gopt} × ${Math.exp(-1).toFixed(6)}<br>
+              = <strong>${Smax.toFixed(6)} = ${pct(Smax)}</strong>` },
+      { n:5, desc:'Express in closed form',
+        math:isPure
+          ? `S_max = 1/(2e) ≈ <strong>0.1839 = 18.39%</strong>`
+          : `S_max = 1/e ≈ <strong>0.3679 = 36.79%</strong>` },
+    ];
+    summary = `Optimal G* = <strong>${Gopt}</strong> &nbsp;|&nbsp; Maximum S = <strong>${pct(Smax)}</strong> = <strong>${isPure?'1/(2e)':'1/e'}</strong>`;
+    note = `This is the theoretical peak. Beyond G*, adding more load decreases throughput due to increasing collisions.`;
+
+  } else if (type === 'inverse_G') {
+    // Numerically find G1 < Gopt and G2 > Gopt that give target S
+    const Gopt = isPure ? 0.5 : 1.0;
+    const Smax_check = isPure ? 0.5*Math.exp(-1) : Math.exp(-1);
+    const fn = g => isPure ? g*Math.exp(-2*g) : g*Math.exp(-g);
+
+    let G1 = null, G2 = null;
+    if (Starget <= Smax_check) {
+      // Binary search for G1 (0 < G < Gopt)
+      let lo = 0.0001, hi = Gopt;
+      for (let i=0; i<80; i++) { const mid=(lo+hi)/2; fn(mid)<Starget ? lo=mid : hi=mid; }
+      G1 = (lo+hi)/2;
+      // Binary search for G2 (Gopt < G < 10)
+      lo = Gopt; hi = 10;
+      for (let i=0; i<80; i++) { const mid=(lo+hi)/2; fn(mid)>Starget ? lo=mid : hi=mid; }
+      G2 = (lo+hi)/2;
+    }
+    title = `Find G given S = ${Starget} — ${label} ALOHA (Inverse Problem)`;
+    steps = [
+      { n:1, desc:'Check if target S is achievable',
+        math:`Target S = ${Starget} = ${pct(Starget)}<br>
+              Max possible S (${label}) = ${pct(Smax_check)}<br>
+              ${Starget <= Smax_check
+                ? `<strong style="color:var(--green)">${Starget} ≤ ${Smax_check.toFixed(4)} → Two solutions exist ✓</strong>`
+                : `<strong style="color:var(--red)">Target S > S_max → Impossible! No solution. ✗</strong>`}` },
+      ...(G1 !== null ? [
+        { n:2, desc:'Understand why two solutions exist',
+          math:`S = ${isPure?'G·e^(−2G)':'G·e^(−G)'} is a unimodal curve peaking at G=${Gopt}<br>
+                Any S < S_max is hit twice: once on the rising side, once on the falling side` },
+        { n:3, desc:'Solution 1 — G₁ (stable, lightly loaded)',
+          math:`G₁ ≈ <strong>${G1.toFixed(4)}</strong> (below peak G*=${Gopt})<br>
+                Verify: ${fn(G1).toFixed(6)} ≈ ${Starget} ${Math.abs(fn(G1)-Starget)<0.001?'✓':'(≈)'}` },
+        { n:4, desc:'Solution 2 — G₂ (unstable, overloaded)',
+          math:`G₂ ≈ <strong>${G2.toFixed(4)}</strong> (above peak G*=${Gopt})<br>
+                Verify: ${fn(G2).toFixed(6)} ≈ ${Starget} ${Math.abs(fn(G2)-Starget)<0.001?'✓':'(≈)'}` },
+        { n:5, desc:'Which solution to use?',
+          math:`G₁ = ${G1.toFixed(4)} → <strong style="color:var(--green)">Stable</strong> operating point. Preferred in practice.<br>
+                G₂ = ${G2.toFixed(4)} → <strong style="color:var(--red)">Unstable</strong>. Collision cascade risk. Avoid.` },
+      ] : [
+        { n:2, desc:'No solution — target is above maximum', math:`S_target = ${pct(Starget)} > S_max = ${pct(Smax_check)}<br>Reduce target S or switch protocol.` }
+      ]),
+    ];
+    summary = G1 !== null
+      ? `G₁ (stable) ≈ <strong>${G1.toFixed(4)}</strong> &nbsp;|&nbsp; G₂ (unstable) ≈ <strong>${G2.toFixed(4)}</strong>`
+      : `<span style="color:var(--red)">No solution — Target S exceeds S_max = ${pct(Smax_check)}</span>`;
+    note = `G₁ and G₂ are found by numerical binary search. In exams, use the known table values or the S-G curve graph to locate them.`;
+
+  } else if (type === 'compare_G') {
+    const Sp = G*Math.exp(-2*G), Ss = G*Math.exp(-G);
+    const Pep = Math.exp(-2*G), Pes = Math.exp(-G);
+    const Pcp = Math.max(0,1-Pep-Sp), Pcs = Math.max(0,1-Pes-Ss);
+    title = `Pure vs Slotted ALOHA Comparison at G = ${G}`;
+    steps = [
+      { n:1, desc:'Pure ALOHA Throughput',
+        math:`S_pure = G · e^(−2G) = ${G} · e^(${(-2*G).toFixed(4)})<br>
+              = ${G} × ${Math.exp(-2*G).toFixed(6)} = <strong>${Sp.toFixed(6)} = ${pct(Sp)}</strong>` },
+      { n:2, desc:'Slotted ALOHA Throughput',
+        math:`S_slotted = G · e^(−G) = ${G} · e^(${(-G).toFixed(4)})<br>
+              = ${G} × ${Math.exp(-G).toFixed(6)} = <strong>${Ss.toFixed(6)} = ${pct(Ss)}</strong>` },
+      { n:3, desc:'Pure ALOHA — All Probabilities',
+        math:`P(empty) = e^(−2G) = <strong>${Pep.toFixed(6)} = ${pct(Pep)}</strong><br>
+              P(success) = <strong>${Sp.toFixed(6)} = ${pct(Sp)}</strong><br>
+              P(collision) = 1 − ${Pep.toFixed(4)} − ${Sp.toFixed(4)} = <strong>${Pcp.toFixed(6)} = ${pct(Pcp)}</strong>` },
+      { n:4, desc:'Slotted ALOHA — All Probabilities',
+        math:`P(empty) = e^(−G) = <strong>${Pes.toFixed(6)} = ${pct(Pes)}</strong><br>
+              P(success) = <strong>${Ss.toFixed(6)} = ${pct(Ss)}</strong><br>
+              P(collision) = 1 − ${Pes.toFixed(4)} − ${Ss.toFixed(4)} = <strong>${Pcs.toFixed(6)} = ${pct(Pcs)}</strong>` },
+      { n:5, desc:'Ratio comparison',
+        math:`S_slotted / S_pure = ${Ss.toFixed(6)} / ${Sp.toFixed(6)} = <strong>${Sp>0?(Ss/Sp).toFixed(4):'∞'}×</strong><br>
+              (This ratio → 2× as G→0, showing Slotted is always better or equal)` },
+    ];
+    summary = `At G = ${G}: Pure S = <strong>${pct(Sp)}</strong> &nbsp;|&nbsp; Slotted S = <strong>${pct(Ss)}</strong> &nbsp;|&nbsp; Ratio = <strong>${Sp>0?(Ss/Sp).toFixed(3):'∞'}×</strong>`;
+    note = `Slotted ALOHA is always at least as good as Pure ALOHA at any given G. The ratio S_slotted / S_pure approaches exactly 2 for small G.`;
+
+  } else if (type === 'min_stations') {
+    const Sthresh = Spct / 100;
+    const Smax_c  = isPure ? 0.5*Math.exp(-1) : Math.exp(-1);
+    const fnS     = g => isPure ? g*Math.exp(-2*g) : g*Math.exp(-g);
+
+    let kMin = null, found = false;
+    if (Sthresh <= Smax_c) {
+      for (let ki = 1; ki <= 500; ki++) {
+        const Gi = ki * p;
+        if (fnS(Gi) >= Sthresh) { kMin = ki; found = true; break; }
+      }
+    }
+    title = `Minimum Stations for S ≥ ${Spct}% — ${label} ALOHA, p = ${p}`;
+    steps = [
+      { n:1, desc:'Understand the relationship G = k × p',
+        math:`G = k × p = k × ${p}<br>
+              More stations k → higher offered load G` },
+      { n:2, desc:'Check if target is achievable',
+        math:`Target S = ${pct(Sthresh)}<br>
+              Max possible (${label}) = ${pct(Smax_c)}<br>
+              ${Sthresh <= Smax_c
+                ? '<strong style="color:var(--green)">Achievable ✓</strong>'
+                : '<strong style="color:var(--red)">Not achievable — target exceeds S_max ✗</strong>'}` },
+      ...(found && kMin !== null ? [
+        { n:3, desc:'Try increasing k until S ≥ target',
+          math:(() => {
+            let rows = '';
+            for (let ki = Math.max(1, kMin-2); ki <= kMin; ki++) {
+              const Gi = ki*p, Si = fnS(Gi);
+              rows += `k=${ki}: G=${Gi.toFixed(4)}, S=${Si.toFixed(4)}=${pct(Si)} ${Si>=Sthresh?'<strong style="color:var(--green)">≥ '+pct(Sthresh)+' ✓</strong>':'<span style="color:var(--red)">< '+pct(Sthresh)+' ✗</span>'}<br>`;
+            }
+            return rows;
+          })() },
+        { n:4, desc:`Verify k = ${kMin}`,
+          math:`G = ${kMin} × ${p} = ${(kMin*p).toFixed(4)}<br>
+                S = ${fnS(kMin*p).toFixed(6)} = ${pct(fnS(kMin*p))} ≥ ${pct(Sthresh)} ✓` },
+      ] : [
+        { n:3, desc:'No solution found', math:'Target throughput exceeds S_max — no value of k can achieve this.' }
+      ]),
+    ];
+    summary = found && kMin !== null
+      ? `Minimum k = <strong>${kMin}</strong> stations (G = ${(kMin*p).toFixed(4)}, S = ${pct(fnS(kMin*p))})`
+      : `<span style="color:var(--red)">Not achievable — reduce target S%</span>`;
+    note = `Higher k is not always better — beyond the optimal G, more stations actually decrease throughput due to more collisions.`;
+
+  } else if (type === 'frames_per_sec') {
+    const framesPerSec = S / Tp;
+    const maxFPS = 1 / Tp;
+    title = `Successful Frames per Second — ${label} ALOHA`;
+    steps = [
+      { n:1, desc:'Frame transmission time T_p',
+        math:`T_p = Frame Size / Bandwidth<br>
+              = ${fsBits} bits ÷ ${fBW(bwBps)}<br>
+              = <strong>${fT(Tp)}</strong>` },
+      { n:2, desc:'Maximum possible frames/sec (channel capacity)',
+        math:`Max frames/sec = 1 / T_p = 1 / ${fT(Tp)}<br>
+              = <strong>${maxFPS.toFixed(2)} frames/sec</strong>` },
+      { n:3, desc:`Throughput S — ${label} ALOHA`,
+        math:`S = ${isPure?'G · e^(−2G)':'G · e^(−G)'} = ${G} · e<sup>${isPure?(-2*G).toFixed(4):(-G).toFixed(4)}</sup><br>
+              = <strong>${S.toFixed(6)} = ${pct(S)}</strong>` },
+      { n:4, desc:'Successful frames/sec = S × Max frames/sec',
+        math:`= ${S.toFixed(6)} × ${maxFPS.toFixed(2)}<br>
+              = <strong>${framesPerSec.toFixed(2)} frames/sec</strong>` },
+      { n:5, desc:'Alternative: effective data rate',
+        math:`= ${framesPerSec.toFixed(2)} frames/sec × ${fsBits} bits/frame<br>
+              = <strong>${fBW(effBps)}</strong>` },
+    ];
+    summary = `Max capacity: <strong>${maxFPS.toFixed(2)} frames/sec</strong> &nbsp;|&nbsp; Successful: <strong>${framesPerSec.toFixed(2)} frames/sec</strong> = ${pct(S)} utilisation`;
+    note = `Frames/sec × frame size = effective bandwidth. Both approaches give the same answer.`;
+
+  } else if (type === 'full_analysis') {
+    const Gkp = k * p;
+    const pOpt = isPure ? 1/(2*k) : 1/k;
+    const PsOpt = k * pOpt * Math.pow(1-pOpt, k-1);
+    const framesPerSec = S / Tp;
+    title = `Full Analysis — ${label} ALOHA | All Inputs`;
+    steps = [
+      { n:1, desc:'Unit conversion',
+        math:`Bandwidth: ${bwRaw} ${bwUnit} = <strong>${fBW(bwBps)}</strong><br>
+              Frame size: ${fsRaw} ${fsUnit} = <strong>${fFS(fsBits)}</strong>` },
+      { n:2, desc:'Frame transmission time T_p',
+        math:`T_p = ${fsBits} bits ÷ ${fBW(bwBps)} = <strong>${fT(Tp)}</strong>` },
+      { n:3, desc:`Throughput S (${label} ALOHA formula)`,
+        math:`S = ${isPure?'G·e^(−2G)':'G·e^(−G)'} = ${G} · e<sup>${isPure?(-2*G).toFixed(4):(-G).toFixed(4)}</sup> = <strong>${S.toFixed(6)} = ${pct(S)}</strong>` },
+      { n:4, desc:'P(empty), P(success), P(collision)',
+        math:`P(empty) = e<sup>${isPure?(-2*G).toFixed(4):(-G).toFixed(4)}</sup> = <strong>${Pempty.toFixed(6)} = ${pct(Pempty)}</strong><br>
+              P(success) = S = <strong>${S.toFixed(6)} = ${pct(S)}</strong><br>
+              P(collision) = 1 − ${Pempty.toFixed(4)} − ${S.toFixed(4)} = <strong>${Pcoll.toFixed(6)} = ${pct(Pcoll)}</strong><br>
+              Sum = ${(Pempty+S+Pcoll).toFixed(4)} ✓` },
+      { n:5, desc:'Binomial P(success) — exact for finite k',
+        math:`P<sub>s</sub> = k·p·(1−p)<sup>k−1</sup> = ${k}×${p}×(${(1-p).toFixed(4)})<sup>${k-1}</sup> = <strong>${pSuccB.toFixed(6)} = ${pct(pSuccB)}</strong>` },
+      { n:6, desc:'Offered load cross-check G vs k·p',
+        math:`G (input) = ${G} &nbsp;&nbsp; k×p = ${k}×${p} = ${Gkp.toFixed(4)}<br>
+              ${Math.abs(Gkp-G)>0.01
+                ? `<span style="color:var(--amber)">⚠ Differ by ${Math.abs(Gkp-G).toFixed(4)} — inputs may be inconsistent</span>`
+                : '<span style="color:var(--green)">✓ Consistent</span>'}` },
+      { n:7, desc:'Optimal p per station',
+        math:`p* = ${isPure?'1/(2k)':'1/k'} = ${isPure?`1/(2×${k})`:`1/${k}`} = <strong>${pOpt.toFixed(4)}</strong><br>
+              Max P(success) at p* = <strong>${PsOpt.toFixed(6)} = ${pct(PsOpt)}</strong>` },
+      { n:8, desc:'Effective throughput',
+        math:`= S × BW = ${S.toFixed(6)} × ${fBW(bwBps)} = <strong>${fBW(effBps)}</strong><br>
+              = ${framesPerSec.toFixed(2)} frames/sec × ${fsBits} bits = <strong>${fBW(effBps)}</strong> ✓` },
+    ];
+    summary = `S = <strong>${pct(S)}</strong> &nbsp;|&nbsp; P(coll) = <strong>${pct(Pcoll)}</strong> &nbsp;|&nbsp; Eff. BW = <strong>${fBW(effBps)}</strong> &nbsp;|&nbsp; T_p = <strong>${fT(Tp)}</strong>`;
+    note = `Poisson model uses G; Binomial uses k and p directly. For large k, both converge. Cross-check: G ≈ k×p.`;
+  }
+
+  // Render output
+  const out = document.getElementById('sol-out');
+  out.style.display = 'block';
+  out.innerHTML = `
+    <div class="ss-output-title">
+      <span class="ss-output-badge">${label.toUpperCase()} ALOHA</span>
+      <span class="ss-output-badge" style="color:var(--cyan);background:rgba(103,232,249,0.08);border-color:rgba(103,232,249,0.25)">${title}</span>
+    </div>
+    ${steps.map(s => `
+      <div class="ss-step">
+        <div class="ss-step-head">
+          <span class="ss-step-num">${s.n}</span>
+          <span class="ss-step-desc">${s.desc}</span>
+        </div>
+        <div class="ss-step-math">${s.math}</div>
+      </div>
+    `).join('')}
+    <div class="ss-summary"><strong style="color:var(--green)">✓ Answer</strong><br>${summary}</div>
+    ${note ? `<div class="ss-note"><strong style="color:var(--amber)">Note:</strong> ${note}</div>` : ''}
+  `;
+  out.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+/* ─── OLD SOLVER (kept for master panel compatibility) ─── */
 function calcSolver() {
   const proto  = document.getElementById('sol-proto').value;
   const G      = parseFloat(document.getElementById('sol-G').value) || 0.5;
