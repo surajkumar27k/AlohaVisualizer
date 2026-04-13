@@ -474,58 +474,196 @@
     </div>
   </div>
 
-  <div class="solver">
-    <div class="solver-header">
-      <span class="solver-header-lbl">Interactive Solver</span>
+  <!-- ═══════════════════ NEW SMART SOLVER ═══════════════════ -->
+  <div class="solver" id="smart-solver">
+    <div class="solver-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <span class="solver-header-lbl">∑ Smart Numerical Solver</span>
+      <span style="font-family:var(--font-mono);font-size:10px;color:var(--dim);letter-spacing:0.5px">Enter all values → Choose problem type → Solve</span>
     </div>
+
     <div class="solver-body">
-      <div class="sol-grid">
-        <div class="sf">
-          <label>Protocol</label>
-          <select id="sol-proto">
+
+      <!-- STEP 1: ALL INPUTS -->
+      <div class="smart-step-label">
+        <span class="smart-step-num">Step 1</span>
+        <span class="smart-step-title">Enter All Given Values</span>
+        <span class="smart-step-hint">Fill in everything from your question. Leave others at default — they won't be used unless needed.</span>
+      </div>
+
+      <div class="smart-inputs-grid">
+        <!-- Protocol -->
+        <div class="smart-field">
+          <label class="smart-label">Protocol</label>
+          <select id="sol-proto" class="smart-select">
             <option value="pure">Pure ALOHA</option>
             <option value="slotted">Slotted ALOHA</option>
           </select>
         </div>
-        <div class="sf">
-          <label>Offered Load G</label>
-          <input type="number" id="sol-G" value="0.5" min="0.001" max="10" step="0.01"/>
+
+        <!-- G -->
+        <div class="smart-field">
+          <label class="smart-label">Offered Load <span class="smart-var">G</span></label>
+          <input type="number" id="sol-G" class="smart-input" value="0.5" min="0.001" max="10" step="0.01" placeholder="e.g. 0.5"/>
+          <span class="smart-hint">frames per frame-time</span>
         </div>
-        <div class="sf">
-          <label>Stations k</label>
-          <input type="number" id="sol-k" value="5" min="1" max="100" step="1"/>
+
+        <!-- k -->
+        <div class="smart-field">
+          <label class="smart-label">No. of Stations <span class="smart-var">k</span></label>
+          <input type="number" id="sol-k" class="smart-input" value="5" min="1" max="500" step="1" placeholder="e.g. 5"/>
+          <span class="smart-hint">active stations</span>
         </div>
-        <div class="sf">
-          <label>Tx Probability p</label>
-          <input type="number" id="sol-p" value="0.2" min="0.001" max="1" step="0.001"/>
+
+        <!-- p -->
+        <div class="smart-field">
+          <label class="smart-label">Tx Probability <span class="smart-var">p</span></label>
+          <input type="number" id="sol-p" class="smart-input" value="0.2" min="0.0001" max="1" step="0.0001" placeholder="e.g. 0.2"/>
+          <span class="smart-hint">per slot per station</span>
         </div>
-        <div class="sf">
-          <label>Bandwidth</label>
+
+        <!-- Bandwidth -->
+        <div class="smart-field">
+          <label class="smart-label">Bandwidth <span class="smart-var">BW</span></label>
           <div style="display:flex;gap:6px">
-            <input type="number" id="sol-bw" value="200" min="0.001" max="100000000" step="any" style="flex:1"/>
-            <select id="sol-bw-unit" style="width:76px">
+            <input type="number" id="sol-bw" class="smart-input" value="200" min="0.001" step="any" placeholder="e.g. 200" style="flex:1"/>
+            <select id="sol-bw-unit" class="smart-select" style="width:80px">
               <option value="bps">bps</option>
               <option value="kbps" selected>kbps</option>
               <option value="Mbps">Mbps</option>
               <option value="Gbps">Gbps</option>
             </select>
           </div>
+          <span class="smart-hint">channel bandwidth</span>
         </div>
-        <div class="sf">
-          <label>Frame Size</label>
+
+        <!-- Frame Size -->
+        <div class="smart-field">
+          <label class="smart-label">Frame Size <span class="smart-var">L</span></label>
           <div style="display:flex;gap:6px">
-            <input type="number" id="sol-frame" value="1000" min="1" max="100000000" step="any" style="flex:1"/>
-            <select id="sol-frame-unit" style="width:76px">
+            <input type="number" id="sol-frame" class="smart-input" value="1000" min="1" step="any" placeholder="e.g. 1000" style="flex:1"/>
+            <select id="sol-frame-unit" class="smart-select" style="width:80px">
               <option value="bits" selected>bits</option>
               <option value="bytes">bytes</option>
               <option value="KB">KB</option>
               <option value="MB">MB</option>
             </select>
           </div>
+          <span class="smart-hint">size of each frame</span>
+        </div>
+
+        <!-- Target S (for inverse problems) -->
+        <div class="smart-field">
+          <label class="smart-label">Target Throughput <span class="smart-var">S</span> <span style="font-size:10px;color:var(--dim)">(inverse only)</span></label>
+          <input type="number" id="sol-S-target" class="smart-input" value="0.10" min="0.0001" max="0.999" step="0.0001" placeholder="e.g. 0.10"/>
+          <span class="smart-hint">for "find G given S" problems</span>
+        </div>
+
+        <!-- Target S% (for station problems) -->
+        <div class="smart-field">
+          <label class="smart-label">Target S% <span class="smart-var">S≥?</span> <span style="font-size:10px;color:var(--dim)">(station count only)</span></label>
+          <input type="number" id="sol-S-pct" class="smart-input" value="30" min="0.01" max="99.9" step="0.01" placeholder="e.g. 30"/>
+          <span class="smart-hint">minimum required throughput %</span>
         </div>
       </div>
-      <button class="calc-btn" onclick="calcSolver()">Calculate →</button>
-      <div id="sol-out"></div>
+
+      <!-- STEP 2: CHOOSE PROBLEM TYPE -->
+      <div class="smart-step-label" style="margin-top:28px">
+        <span class="smart-step-num">Step 2</span>
+        <span class="smart-step-title">Choose Your Problem Type</span>
+        <span class="smart-step-hint">Pick the question your notebook / exam is asking.</span>
+      </div>
+
+      <div class="smart-prob-grid" id="smart-prob-grid">
+
+        <button class="smart-prob-btn" onclick="smartSolve('throughput', this)">
+          <span class="spb-icon">📈</span>
+          <span class="spb-title">Find Throughput S</span>
+          <span class="spb-desc">S = G·e<sup>−G</sup> or G·e<sup>−2G</sup></span>
+          <span class="spb-uses">Uses: Protocol, G</span>
+        </button>
+
+        <button class="smart-prob-btn" onclick="smartSolve('probabilities', this)">
+          <span class="spb-icon">🎲</span>
+          <span class="spb-title">Find All Probabilities</span>
+          <span class="spb-desc">P(empty), P(success), P(collision)</span>
+          <span class="spb-uses">Uses: Protocol, G</span>
+        </button>
+
+        <button class="smart-prob-btn" onclick="smartSolve('binomial', this)">
+          <span class="spb-icon">📊</span>
+          <span class="spb-title">P(Success) — Binomial</span>
+          <span class="spb-desc">Exactly 1 of k stations transmits</span>
+          <span class="spb-uses">Uses: k, p</span>
+        </button>
+
+        <button class="smart-prob-btn" onclick="smartSolve('optimal_p', this)">
+          <span class="spb-icon">🎯</span>
+          <span class="spb-title">Find Optimal p & Max P(success)</span>
+          <span class="spb-desc">Best transmission probability per station</span>
+          <span class="spb-uses">Uses: Protocol, k</span>
+        </button>
+
+        <button class="smart-prob-btn" onclick="smartSolve('frame_time', this)">
+          <span class="spb-icon">⏱</span>
+          <span class="spb-title">Find Frame Transmission Time T<sub>p</sub></span>
+          <span class="spb-desc">T<sub>p</sub> = Frame Size / Bandwidth</span>
+          <span class="spb-uses">Uses: Frame Size, Bandwidth</span>
+        </button>
+
+        <button class="smart-prob-btn" onclick="smartSolve('effective_bw', this)">
+          <span class="spb-icon">⚡</span>
+          <span class="spb-title">Find Effective Throughput (kbps / Mbps)</span>
+          <span class="spb-desc">Actual data rate = S × Bandwidth</span>
+          <span class="spb-uses">Uses: Protocol, G, Bandwidth, Frame Size</span>
+        </button>
+
+        <button class="smart-prob-btn" onclick="smartSolve('max_throughput', this)">
+          <span class="spb-icon">🏆</span>
+          <span class="spb-title">Find Maximum Throughput & Optimal G</span>
+          <span class="spb-desc">Peak S and G* via differentiation</span>
+          <span class="spb-uses">Uses: Protocol</span>
+        </button>
+
+        <button class="smart-prob-btn" onclick="smartSolve('inverse_G', this)">
+          <span class="spb-icon">🔍</span>
+          <span class="spb-title">Find G given Throughput S (Inverse)</span>
+          <span class="spb-desc">Two possible G values — stable & unstable</span>
+          <span class="spb-uses">Uses: Protocol, Target S</span>
+        </button>
+
+        <button class="smart-prob-btn" onclick="smartSolve('compare_G', this)">
+          <span class="spb-icon">⇌</span>
+          <span class="spb-title">Compare Pure vs Slotted at Given G</span>
+          <span class="spb-desc">Side-by-side S, P(empty), P(coll)</span>
+          <span class="spb-uses">Uses: G</span>
+        </button>
+
+        <button class="smart-prob-btn" onclick="smartSolve('min_stations', this)">
+          <span class="spb-icon">🔢</span>
+          <span class="spb-title">Find Minimum Stations for Target S%</span>
+          <span class="spb-desc">Min k such that S ≥ target</span>
+          <span class="spb-uses">Uses: Protocol, p, Target S%</span>
+        </button>
+
+        <button class="smart-prob-btn" onclick="smartSolve('frames_per_sec', this)">
+          <span class="spb-icon">📦</span>
+          <span class="spb-title">Find Successful Frames per Second</span>
+          <span class="spb-desc">S / T<sub>p</sub> = successful frames/sec</span>
+          <span class="spb-uses">Uses: Protocol, G, Bandwidth, Frame Size</span>
+        </button>
+
+        <button class="smart-prob-btn" onclick="smartSolve('full_analysis', this)">
+          <span class="spb-icon">🧮</span>
+          <span class="spb-title">Full Analysis — All Results</span>
+          <span class="spb-desc">Every formula, every metric in one shot</span>
+          <span class="spb-uses">Uses: All inputs</span>
+        </button>
+
+      </div>
+
+      <!-- OUTPUT -->
+      <div id="sol-out" style="display:none;margin-top:24px"></div>
+
     </div>
   </div>
 </section>
