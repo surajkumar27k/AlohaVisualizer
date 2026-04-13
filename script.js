@@ -503,11 +503,42 @@ function showP(i) {
   document.querySelectorAll('.num-prob').forEach((p,idx) => p.classList.toggle('on',idx===i));
 }
 
+/* ─── SOLVER PHASE TOGGLE ─── */
+function revealProblemTypes() {
+  const phase1 = document.getElementById('solver-phase-1');
+  const phase2 = document.getElementById('solver-phase-2');
+  const btn    = document.getElementById('solverRevealBtn');
+  if (phase1) phase1.style.display = 'none';
+  if (btn)    btn.style.display    = 'none';
+  if (phase2) {
+    phase2.classList.remove('solver-phase-2-hidden');
+    phase2.classList.add('solver-phase-2-visible');
+  }
+}
+
+function hideProblemTypes() {
+  const phase1 = document.getElementById('solver-phase-1');
+  const phase2 = document.getElementById('solver-phase-2');
+  const btn    = document.getElementById('solverRevealBtn');
+  if (phase2) {
+    phase2.classList.remove('solver-phase-2-visible');
+    phase2.classList.add('solver-phase-2-hidden');
+  }
+  if (phase1) phase1.style.display = '';
+  if (btn)    btn.style.display    = '';
+  // clear previous output
+  const out = document.getElementById('sol-out');
+  if (out) { out.style.display = 'none'; out.innerHTML = ''; }
+  document.querySelectorAll('.smart-prob-btn').forEach(b => b.classList.remove('active'));
+}
+
 /* ─── SMART SOLVER ─── */
 function smartSolve(type, btn) {
-  // Highlight active button
-  document.querySelectorAll('.smart-prob-btn').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
+  if (!type) {
+    const out = document.getElementById('sol-out');
+    if (out) { out.style.display = 'none'; out.innerHTML = ''; }
+    return;
+  }
 
   // Read ALL inputs
   const proto   = document.getElementById('sol-proto').value;
