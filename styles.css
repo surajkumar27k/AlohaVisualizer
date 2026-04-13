@@ -600,52 +600,63 @@ canvas { display: block; width: 100%; background: var(--bg3); border: 1px solid 
 ══════════════════════════════════════════════════ */
 .ss-output-title {
   font-family: var(--font-mono); font-size: 11px; color: var(--dim);
-  letter-spacing: 0.5px; margin-bottom: 16px;
-  padding-bottom: 10px; border-bottom: 1px solid var(--border);
+  letter-spacing: 0.5px; margin-bottom: 20px;
+  padding-bottom: 12px; border-bottom: 1px solid var(--border);
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
 }
 .ss-output-badge {
-  font-size: 10px; font-weight: 700; padding: 2px 9px; border-radius: 4px;
+  font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 4px;
   background: rgba(59,158,255,0.12); color: var(--blue);
   border: 1px solid rgba(59,158,255,0.25); font-family: var(--font-mono);
 }
-.ss-step {
-  display: flex; flex-direction: column; gap: 5px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
+
+/* Step accent colours cycling through blue → cyan → purple → amber */
+.ss-step { margin-bottom: 10px; border-radius: 10px; overflow: hidden; }
+.ss-step:nth-child(4n+1) { --step-accent: var(--blue);   --step-bg: rgba(59,158,255,0.06); }
+.ss-step:nth-child(4n+2) { --step-accent: var(--cyan);   --step-bg: rgba(103,232,249,0.06); }
+.ss-step:nth-child(4n+3) { --step-accent: var(--purple); --step-bg: rgba(167,139,250,0.06); }
+.ss-step:nth-child(4n+0) { --step-accent: var(--amber);  --step-bg: rgba(240,180,41,0.06); }
+
+.ss-step-head {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 14px;
+  background: var(--step-bg);
+  border-left: 3px solid var(--step-accent);
 }
-.ss-step:last-of-type { border-bottom: none; }
-.ss-step-head { display: flex; align-items: center; gap: 10px; }
 .ss-step-num {
-  width: 24px; height: 24px; border-radius: 50%;
-  background: var(--bg4); border: 1px solid var(--border2);
-  font-family: var(--font-mono); font-size: 10px; font-weight: 700;
-  color: var(--blue); display: flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 6px;
+  background: var(--step-accent);
+  font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+  color: var(--bg); display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
-.ss-step-desc { font-size: 13px; font-weight: 600; color: var(--text); }
-.ss-step-math {
-  margin-left: 34px;
-  font-family: var(--font-mono); font-size: 12px; color: var(--cyan);
-  line-height: 1.85;
-  background: var(--bg4);
-  padding: 10px 14px;
-  border-radius: 6px;
-  border-left: 2px solid var(--blue);
+.ss-step-desc {
+  font-size: 13px; font-weight: 600; color: var(--text);
+  line-height: 1.4;
 }
-.ss-summary {
-  margin-top: 14px; padding: 14px 18px;
-  background: rgba(52,211,153,0.07);
-  border: 1px solid rgba(52,211,153,0.25);
-  border-radius: 8px;
-  font-family: var(--font-mono); font-size: 12px;
+.ss-step-math {
+  font-family: var(--font-mono); font-size: 12.5px; color: var(--text);
   line-height: 2;
+  background: var(--bg3);
+  padding: 12px 14px 12px 17px;
+  border-left: 3px solid var(--step-accent);
+  opacity: 0.92;
+}
+
+.ss-summary {
+  margin-top: 16px; padding: 15px 18px;
+  background: rgba(52,211,153,0.08);
+  border: 1px solid rgba(52,211,153,0.3);
+  border-radius: 10px;
+  font-family: var(--font-mono); font-size: 13px;
+  line-height: 2; color: var(--text);
 }
 .ss-note {
-  margin-top: 10px; padding: 10px 14px;
-  background: rgba(255,255,255,0.03);
+  margin-top: 10px; padding: 11px 15px;
+  background: rgba(240,180,41,0.06);
   border-left: 3px solid var(--amber);
   border-radius: 6px; font-size: 12px; color: var(--text2);
+  line-height: 1.7;
 }
 
 /* ══════════════════════════════════════════════════
