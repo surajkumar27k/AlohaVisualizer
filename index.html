@@ -544,96 +544,24 @@
           </div>
         </div>
 
-        <!-- Reveal button -->
-        <div style="text-align:center;margin-top:24px">
-          <button class="solver-reveal-btn" id="solverRevealBtn" onclick="revealProblemTypes()">
-            <span class="srv-icon">↓</span>
-            <span class="srv-text">Choose Problem Type</span>
-            <span class="srv-sub">select what you want to calculate</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- ── PHASE 2: PROBLEM TYPE GRID (hidden initially) ── -->
-      <div id="solver-phase-2" class="solver-phase-2-hidden">
-        <div class="solver-phase2-header">
-          <span class="solver-phase2-label">What do you want to find?</span>
-          <button class="solver-back-btn" onclick="hideProblemTypes()">↑ Change values</button>
-        </div>
-
-        <div class="smart-prob-grid" id="smart-prob-grid">
-          <button class="smart-prob-btn" onclick="smartSolve('throughput', this)">
-            <span class="spb-icon">📈</span>
-            <span class="spb-title">Find Throughput S</span>
-            <span class="spb-desc">S = G·e<sup>−G</sup> or G·e<sup>−2G</sup></span>
-            <span class="spb-uses">Uses: Protocol, G</span>
-          </button>
-          <button class="smart-prob-btn" onclick="smartSolve('probabilities', this)">
-            <span class="spb-icon">🎲</span>
-            <span class="spb-title">Find All Probabilities</span>
-            <span class="spb-desc">P(empty), P(success), P(collision)</span>
-            <span class="spb-uses">Uses: Protocol, G</span>
-          </button>
-          <button class="smart-prob-btn" onclick="smartSolve('binomial', this)">
-            <span class="spb-icon">📊</span>
-            <span class="spb-title">P(Success) — Binomial</span>
-            <span class="spb-desc">Exactly 1 of k stations transmits</span>
-            <span class="spb-uses">Uses: k, p</span>
-          </button>
-          <button class="smart-prob-btn" onclick="smartSolve('optimal_p', this)">
-            <span class="spb-icon">🎯</span>
-            <span class="spb-title">Find Optimal p &amp; Max P(success)</span>
-            <span class="spb-desc">Best transmission probability per station</span>
-            <span class="spb-uses">Uses: Protocol, k</span>
-          </button>
-          <button class="smart-prob-btn" onclick="smartSolve('frame_time', this)">
-            <span class="spb-icon">⏱</span>
-            <span class="spb-title">Find Frame Time T<sub>p</sub></span>
-            <span class="spb-desc">T<sub>p</sub> = Frame Size / Bandwidth</span>
-            <span class="spb-uses">Uses: Frame Size, Bandwidth</span>
-          </button>
-          <button class="smart-prob-btn" onclick="smartSolve('effective_bw', this)">
-            <span class="spb-icon">⚡</span>
-            <span class="spb-title">Find Effective Throughput</span>
-            <span class="spb-desc">Actual data rate = S × Bandwidth</span>
-            <span class="spb-uses">Uses: Protocol, G, BW, Frame</span>
-          </button>
-          <button class="smart-prob-btn" onclick="smartSolve('max_throughput', this)">
-            <span class="spb-icon">🏆</span>
-            <span class="spb-title">Find Maximum Throughput &amp; Optimal G</span>
-            <span class="spb-desc">Peak S and G* via differentiation</span>
-            <span class="spb-uses">Uses: Protocol</span>
-          </button>
-          <button class="smart-prob-btn" onclick="smartSolve('inverse_G', this)">
-            <span class="spb-icon">🔍</span>
-            <span class="spb-title">Find G given Throughput S</span>
-            <span class="spb-desc">Two possible G values — stable &amp; unstable</span>
-            <span class="spb-uses">Uses: Protocol, Target S</span>
-          </button>
-          <button class="smart-prob-btn" onclick="smartSolve('compare_G', this)">
-            <span class="spb-icon">⇌</span>
-            <span class="spb-title">Compare Pure vs Slotted at G</span>
-            <span class="spb-desc">Side-by-side S, P(empty), P(coll)</span>
-            <span class="spb-uses">Uses: G</span>
-          </button>
-          <button class="smart-prob-btn" onclick="smartSolve('min_stations', this)">
-            <span class="spb-icon">🔢</span>
-            <span class="spb-title">Find Minimum Stations for Target S%</span>
-            <span class="spb-desc">Min k such that S ≥ target</span>
-            <span class="spb-uses">Uses: Protocol, p, Target S%</span>
-          </button>
-          <button class="smart-prob-btn" onclick="smartSolve('frames_per_sec', this)">
-            <span class="spb-icon">📦</span>
-            <span class="spb-title">Find Successful Frames/sec</span>
-            <span class="spb-desc">S / T<sub>p</sub> = successful frames/sec</span>
-            <span class="spb-uses">Uses: Protocol, G, BW, Frame</span>
-          </button>
-          <button class="smart-prob-btn" onclick="smartSolve('full_analysis', this)">
-            <span class="spb-icon">🧮</span>
-            <span class="spb-title">Full Analysis — All Results</span>
-            <span class="spb-desc">Every formula, every metric in one shot</span>
-            <span class="spb-uses">Uses: All inputs</span>
-          </button>
+        <!-- Problem type dropdown -->
+        <div class="smart-field" style="margin-top:20px">
+          <label class="smart-label">What do you want to find?</label>
+          <select id="sol-type" class="smart-select" style="width:100%" onchange="smartSolve(this.value)">
+            <option value="">— Select problem type —</option>
+            <option value="throughput">Find Throughput S</option>
+            <option value="probabilities">Find All Probabilities — P(empty), P(success), P(collision)</option>
+            <option value="binomial">P(Success) Binomial — exactly 1 of k stations</option>
+            <option value="optimal_p">Find Optimal p &amp; Max P(success)</option>
+            <option value="frame_time">Find Frame Time Tₚ</option>
+            <option value="effective_bw">Find Effective Throughput (data rate)</option>
+            <option value="max_throughput">Find Maximum Throughput &amp; Optimal G</option>
+            <option value="inverse_G">Find G given Throughput S (inverse problem)</option>
+            <option value="compare_G">Compare Pure vs Slotted at G</option>
+            <option value="min_stations">Find Minimum Stations for Target S%</option>
+            <option value="frames_per_sec">Find Successful Frames/sec</option>
+            <option value="full_analysis">Full Analysis — All Results</option>
+          </select>
         </div>
 
         <!-- OUTPUT -->
